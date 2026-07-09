@@ -7,4 +7,7 @@ empresas = search_businesses(
 )
 
 
-print(empresas)
+for empresa in empresas:
+    print(
+        empresa.name
+    )

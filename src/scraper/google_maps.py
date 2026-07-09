@@ -1,5 +1,7 @@
 from playwright.sync_api import sync_playwright
 
+from models.business import Business
+
 
 def search_businesses(query, limit=50):
 
@@ -21,13 +23,14 @@ def search_businesses(query, limit=50):
         page.goto(url)
 
         page.wait_for_selector(
-    "div[role='feed']"
-)
-        
+            "div[role='feed']"
+        )
+
         print(page.title())
         print(page.url)
-        html= page.content()
-        
+
+        html = page.content()
+
         with open(
             "maps_debug.html",
             "w",
@@ -43,16 +46,43 @@ def search_businesses(query, limit=50):
             "Feeds encontrados:",
             feed.count()
         )
-        
+
         links = page.locator(
             "a[href*='/maps/place/']"
         )
-        
+
         print(
             "Lugares encontrados:",
             links.count()
         )
-        # aquí iremos agregando extracción
+
+
+        total = min(
+            links.count(),
+            limit
+        )
+
+
+        for index in range(total):
+
+            link = links.nth(index)
+
+            name = link.get_attribute(
+                "aria-label"
+            )
+
+            if name:
+                businesses.append(
+                    Business(
+                        name=name
+                    )
+                )
+
+
+        print(
+            "Negocios extraídos:",
+            len(businesses)
+        )
 
 
         browser.close()
