@@ -14,34 +14,37 @@ The first stable release (v1.0.0) represents the technical proof of concept for 
 
 ## Objectives
 
-- Establish the project structure.
-- Configure the Python development environment.
-- Integrate Playwright.
-- Implement Google Maps navigation.
-- Support interactive search queries.
-- Validate browser automation.
+- [x] Establish the project structure.
+- [x] Configure the Python development environment.
+- [x] Integrate Playwright.
+- [x] Implement Google Maps navigation.
+- [x] Support interactive search queries.
+- [x] Validate browser automation.
 
 ---
 
 # v0.2.0 — Initial Data Extraction
 
-**Status:** In Progress
+Status: Completed
 
 ## Objectives
 
-- Extract business names.
-- Extract business categories.
-- Extract business addresses.
-- Create internal business models.
-- Normalize extracted information.
+- [x] Extract business names.
+- [x] Extract business categories.
+- [x] Extract business addresses.
+- [x] Extract business phone numbers.
+- [x] Create internal business models.
+- [x] Normalize raw extracted data into structured business entities.
 
 ---
 
-# v0.3.0 — Contact Information
+# v0.3.0 — Detail Extraction
 
 ## Objectives
 
-- Extract business phone numbers.
+- Open the business detail panel.
+- Complete missing business information.
+- Extract business website when available.
 - Improve extraction reliability.
 - Handle incomplete or unavailable information.
 
@@ -63,6 +66,7 @@ The first stable release (v1.0.0) represents the technical proof of concept for 
 
 - Automatic result scrolling.
 - Configurable extraction limits.
+- Automatic detail extraction.
 - Stable execution flow.
 
 ---
@@ -90,6 +94,7 @@ Deliver a complete command-line prospecting engine capable of producing structur
 - Interactive CLI.
 - Configuration profiles.
 - Google Maps scraper.
+- Business data extraction.
 - Business normalization.
 - Excel export.
 - Configurable search execution.
