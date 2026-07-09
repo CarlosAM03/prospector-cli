@@ -1,4 +1,4 @@
-from scraper.google_maps import search_businesses
+from scraper.google_maps.scraper import search_businesses
 
 input_query = input("Ingrese la consulta de búsqueda: ")
 

@@ -25,7 +25,7 @@ The first stable release (v1.0.0) represents the technical proof of concept for 
 
 # v0.2.0 — Initial Data Extraction
 
-Status: Completed
+**Status:** Completed
 
 ## Objectives
 
@@ -38,15 +38,17 @@ Status: Completed
 
 ---
 
-# v0.3.0 — Detail Extraction
+# v0.3.0 — Business Detail Extraction
 
 ## Objectives
 
 - Open the business detail panel.
 - Complete missing business information.
+- Extract business phone numbers with improved reliability.
+- Extract business email addresses.
 - Extract business website when available.
-- Improve extraction reliability.
 - Handle incomplete or unavailable information.
+- Improve extraction reliability.
 
 ---
 
@@ -60,7 +62,19 @@ Status: Completed
 
 ---
 
-# v0.5.0 — Search Automation
+# v0.5.0 — Website Inspection
+
+## Objectives
+
+- Visit the business website.
+- Detect the primary website language.
+- Detect multilingual websites when possible.
+- Validate website availability.
+- Enrich business information with website metadata.
+
+---
+
+# v0.6.0 — Search Automation
 
 ## Objectives
 
@@ -71,7 +85,7 @@ Status: Completed
 
 ---
 
-# v0.6.0 — Configuration Profiles
+# v0.7.0 — Configuration Profiles
 
 ## Objectives
 
@@ -95,6 +109,7 @@ Deliver a complete command-line prospecting engine capable of producing structur
 - Configuration profiles.
 - Google Maps scraper.
 - Business data extraction.
+- Website inspection.
 - Business normalization.
 - Excel export.
 - Configurable search execution.
@@ -112,4 +127,5 @@ Potential areas include:
 - Additional public data sources.
 - Additional export formats.
 - Improved normalization strategies.
+- Additional website enrichment.
 - Performance optimizations.
