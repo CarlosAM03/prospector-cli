@@ -1,0 +1,27 @@
+# viertual environment
+venv/
+
+# Python
+__pycache__/
+*.pyc
+*.py[cod]
+*.pyo
+
+# Playwright
+playwright-report/
+test-results/
+
+# VS Code
+.vscode/
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+
+# Generated files
+maps_debug.html
+
+# Environment variables
+.env
