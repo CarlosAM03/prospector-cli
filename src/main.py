@@ -1,13 +1,29 @@
 from scraper.google_maps import search_businesses
 
 input_query = input("Ingrese la consulta de búsqueda: ")
+
 empresas = search_businesses(
     input_query,
     20
 )
 
 
-for empresa in empresas:
+for index, empresa in enumerate(empresas, start=1):
+
     print(
-        empresa.name
+        f"{index}. {empresa.name}"
     )
+
+    print(
+        f"   Categoría: {empresa.category}"
+    )
+
+    print(
+        f"   Dirección: {empresa.address}"
+    )
+
+    print(
+        f"   Teléfono: {empresa.phone}"
+    )
+
+    print()
