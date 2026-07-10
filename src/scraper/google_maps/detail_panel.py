@@ -4,6 +4,7 @@ from playwright.sync_api import TimeoutError
 
 from models.business import Business
 
+
 def extract_place_id(href: str) -> str | None:
 
     match = re.search(
@@ -12,10 +13,10 @@ def extract_place_id(href: str) -> str | None:
     )
 
     if match:
-
         return match.group(1)
 
     return None
+
 
 def enrich_business(
     page,
@@ -23,18 +24,13 @@ def enrich_business(
     business: Business
 ) -> Business:
 
-    #
-    # Título actual
-    #
-
     place_id = extract_place_id(href)
 
     if place_id is None:
-
         return business
 
     #
-    # Click usando JavaScript
+    # Click mediante JavaScript
     #
 
     page.evaluate(
@@ -46,9 +42,7 @@ def enrich_business(
             );
 
             if(link){
-
                 link.click();
-
             }
 
         }
@@ -81,38 +75,44 @@ def enrich_business(
         return business
 
     #
-    # Leer todo el panel en una sola llamada
+    # Leer todo el panel en una sola llamada JS
     #
 
     data = page.evaluate(
         """
-        () => {
+        () => ({
 
-            return {
+            address:
+                document.querySelector(
+                    "button[data-item-id='address'] .Io6YTe"
+                )?.innerText ?? null,
 
-                address:
-                    document.querySelector(
-                        "button[data-item-id='address'] .Io6YTe"
-                    )?.innerText ?? null,
+            phone:
+                document.querySelector(
+                    "a[data-item-id^='phone:'] .Io6YTe"
+                )?.innerText ?? null,
 
-                phone:
-                    document.querySelector(
-                        "a[data-item-id^='phone:'] .Io6YTe"
-                    )?.innerText ?? null,
+            website:
+                document.querySelector(
+                    "a[data-item-id='authority']"
+                )?.href ?? null
 
-                website:
-                    document.querySelector(
-                        "a[data-item-id='authority']"
-                    )?.href ?? null
-
-            };
-
-        }
+        })
         """
     )
 
-    business.address = data["address"]
-    business.phone = data["phone"]
-    business.website = data["website"]
+    #
+    # Merge de información
+    # Nunca degradar datos existentes.
+    #
+
+    if data["address"]:
+        business.address = data["address"]
+
+    if data["phone"]:
+        business.phone = data["phone"]
+
+    if data["website"]:
+        business.website = data["website"]
 
     return business

@@ -217,6 +217,12 @@ Whenever possible, scrapers should:
 
 Performance optimizations should never compromise modularity, readability or maintainability.
 
+Every execution stage should enrich the information produced by previous stages without degrading it.
+
+A stage may complete missing fields or replace existing values only when a more accurate representation is available.
+
+No stage should overwrite valid data with missing or lower-quality information.
+
 ---
 
 ## Project Structure
@@ -230,6 +236,7 @@ src/
 ├── exporters/
 ├── models/
 ├── scraper/
+├── services/
 ├── utils/
 └── main.py
 ```
@@ -257,8 +264,6 @@ scripting-pipeline.md
 pipelines/
 
 google-maps.md
-yellow-pages.md
-linkedin.md
 ...
 ```
 
