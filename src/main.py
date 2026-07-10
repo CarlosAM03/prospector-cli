@@ -1,3 +1,5 @@
+from exporters.excel import ExcelExporter
+
 from models.search_query import (
     SearchQuery,
     Source,
@@ -5,6 +7,14 @@ from models.search_query import (
 
 from scraper.google_maps.scraper import (
     search_businesses,
+)
+
+from services.export_service import (
+    ExportService,
+)
+
+from utils.file_naming import (
+    build_output_filename,
 )
 
 
@@ -28,12 +38,16 @@ result = search_businesses(
 )
 
 print()
+
 print(
     f"Se encontraron {result.total_found} negocios."
 )
+
 print(
-    f"Tiempo de ejecución: {result.execution_time:.2f} segundos."
+    f"Tiempo de ejecución: "
+    f"{result.execution_time:.2f} segundos."
 )
+
 print()
 
 for index, business in enumerate(
@@ -62,3 +76,18 @@ for index, business in enumerate(
     )
 
     print()
+
+output_path = build_output_filename(
+    query,
+    "xlsx",
+)
+
+ExportService.export(
+    result=result,
+    exporter=ExcelExporter(),
+    output_path=output_path,
+)
+
+print(
+    f"Archivo generado: {output_path}"
+)
