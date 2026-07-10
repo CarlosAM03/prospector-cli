@@ -3,7 +3,6 @@ from playwright.sync_api import sync_playwright
 from .detail_panel import enrich_business
 from .result_list import extract_businesses
 from .search import create_search_page
-from .selectors import RESULT_LINK
 
 
 def search_businesses(
@@ -39,15 +38,9 @@ def search_businesses(
 
         for result in results:
 
-            link = page.locator(
-                RESULT_LINK
-            ).nth(
-                result["index"]
-            )
-
             business = enrich_business(
                 page,
-                link,
+                result["href"],
                 result["business"]
             )
 

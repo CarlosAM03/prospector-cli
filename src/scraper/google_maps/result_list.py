@@ -34,6 +34,10 @@ def extract_businesses(page, limit):
             "aria-label"
         )
 
+        href = link.get_attribute(
+            "href"
+        )
+
         article = link.locator(
             RESULT_ARTICLE
         )
@@ -46,12 +50,12 @@ def extract_businesses(page, limit):
             info_blocks
         )
 
-        if not name:
+        if not name or not href:
             continue
 
         businesses.append(
             {
-                "index": index,
+                "href": href,
                 "business": Business(
                     name=name,
                     category=category,
