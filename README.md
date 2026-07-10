@@ -1,12 +1,12 @@
 # Prospector CLI
 
-Prospector CLI is an open-source command-line engine for extracting structured business prospect data from publicly available sources.
+Prospector CLI is an open-source command-line engine for extracting structured business data from publicly available sources.
 
-The project focuses on transforming raw public information into reusable datasets that can be consumed by CRM, ERP, marketing automation or custom business platforms.
+The project transforms raw public information into reusable datasets that can be consumed by CRM, ERP, marketing automation or custom business platforms.
 
 ---
 
-* Public data in. Structured prospects out.
+*Public data in. Structured business data out.*
 
 ---
 
@@ -14,55 +14,42 @@ The project focuses on transforming raw public information into reusable dataset
 
 Prospector CLI is intentionally designed as a lightweight extraction engine.
 
-Its responsibilities are limited to:
+Its responsibility is to transform public information into structured data through a modular and reusable pipeline.
 
-- Searching public data sources.
-- Extracting business information.
-- Normalizing collected data.
-- Exporting structured results.
+The engine focuses exclusively on:
+
+* Searching public data sources.
+* Extracting business information.
+* Normalizing collected data.
+* Validating extracted information.
+* Exporting structured results.
 
 Business logic such as CRM management, customer administration, marketing workflows, dashboards and analytics belongs to external applications that consume this engine.
 
 ---
 
-## Current Status
+## Design Principles
 
-**Version:** v0.1.0
+The engine is built around a small set of architectural principles that remain constant regardless of the supported data source.
 
-Current development focuses on validating the technical feasibility of the extraction engine through Google Maps before expanding to additional data sources.
+* Single responsibility for every module.
+* Configuration over hardcoded behavior.
+* Source-independent architecture.
+* Normalized internal data model.
+* Scraper-specific internal pipelines.
+* Incremental enrichment of business data.
+* Reusable extraction components.
 
-### Completed
-
-- Project structure.
-- Python environment.
-- Playwright integration.
-- Google Maps navigation.
-- Interactive CLI search.
-- Initial DOM exploration.
-- Browser automation validation.
-
----
-
-## Planned Features
-
-- Business name extraction.
-- Business category extraction.
-- Business address extraction.
-- Phone number extraction.
-- Excel export.
-- CSV export.
-- Automatic scrolling.
-- Configuration profiles.
-- Multiple public data sources.
+Each data source may require a different extraction strategy, but all sources must produce a consistent internal representation.
 
 ---
 
 ## Technology Stack
 
-- Python 3.11
-- Playwright
-- Pandas
-- OpenPyXL
+* Python 3.11
+* Playwright
+* Pandas
+* OpenPyXL
 
 ---
 
@@ -147,27 +134,31 @@ python src/main.py
 
 Technical documentation is available in the `docs/` directory.
 
-- Architecture
-- Scripting Pipeline
-- Project Roadmap
-- Contributing Guide
+Available documentation:
+
+* Architecture overview.
+* Internal execution pipeline.
+* Project roadmap.
+* Contribution guidelines.
 
 ---
 
 ## Project Scope
 
-Prospector CLI is responsible only for obtaining structured prospect information from public sources.
+Prospector CLI is responsible only for obtaining structured business information from public sources.
 
-The following capabilities are intentionally outside the scope of this repository:
+The following responsibilities are intentionally outside the scope of this repository:
 
-- CRM
-- ERP
-- Customer management
-- User management
-- Marketing automation
-- Sales workflows
-- Dashboards
-- Analytics
+* CRM systems.
+* ERP systems.
+* Customer management.
+* User management.
+* Marketing automation.
+* Sales workflows.
+* Dashboards.
+* Analytics.
+* Business process management.
+* Data persistence.
 
 These responsibilities belong to external platforms built on top of this engine.
 
@@ -177,7 +168,13 @@ These responsibilities belong to external platforms built on top of this engine.
 
 Contributions are welcome.
 
-Please read the documentation available in `docs/contributing.md` before submitting changes.
+Before submitting changes, please review the documentation available in:
+
+```text
+docs/contributing.md
+```
+
+All contributions should follow the project's architectural principles and maintain the modular design of the engine.
 
 ---
 
