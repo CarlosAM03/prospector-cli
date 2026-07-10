@@ -1,10 +1,15 @@
 from playwright.sync_api import sync_playwright
 
-from .search import create_search_page
+from .detail_panel import enrich_business
 from .result_list import extract_businesses
+from .search import create_search_page
+from .selectors import RESULT_LINK
 
 
-def search_businesses(query, limit=50):
+def search_businesses(
+    query,
+    limit=50
+):
 
     with sync_playwright() as playwright:
 
@@ -17,10 +22,38 @@ def search_businesses(query, limit=50):
             query
         )
 
-        businesses = extract_businesses(
+        #
+        # Fase 1
+        #
+
+        results = extract_businesses(
             page,
             limit
         )
+
+        businesses = []
+
+        #
+        # Fase 2
+        #
+
+        for result in results:
+
+            link = page.locator(
+                RESULT_LINK
+            ).nth(
+                result["index"]
+            )
+
+            business = enrich_business(
+                page,
+                link,
+                result["business"]
+            )
+
+            businesses.append(
+                business
+            )
 
         browser.close()
 

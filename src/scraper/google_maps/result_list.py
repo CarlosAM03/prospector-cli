@@ -30,14 +30,6 @@ def extract_businesses(page, limit):
 
         link = links.nth(index)
 
-        if index == 0:
-
-            print(
-                link.evaluate(
-                    "(element)=>element.parentElement.outerHTML"
-                )
-            )
-
         name = link.get_attribute(
             "aria-label"
         )
@@ -54,19 +46,23 @@ def extract_businesses(page, limit):
             info_blocks
         )
 
-        if name:
+        if not name:
+            continue
 
-            businesses.append(
-                Business(
+        businesses.append(
+            {
+                "index": index,
+                "business": Business(
                     name=name,
                     category=category,
                     address=address,
                     phone=phone
                 )
-            )
+            }
+        )
 
     print(
-        "Negocios extraídos:",
+        "Negocios encontrados:",
         len(businesses)
     )
 
