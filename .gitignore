@@ -27,3 +27,6 @@ maps_debug.html
 .env
 
 *temp.md
+
+*.csv
+*.xlsx

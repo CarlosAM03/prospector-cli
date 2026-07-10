@@ -1,9 +1,11 @@
 from enum import Enum
 
-from exporters.base import Exporter
+from exporters.csv import CsvExporter
 from exporters.excel import ExcelExporter
 
 from models.search_result import SearchResult
+
+from utils.file_naming import build_output_filename
 
 
 class ExportFormat(str, Enum):
@@ -11,16 +13,44 @@ class ExportFormat(str, Enum):
     CSV = "csv"
 
 
+EXPORTERS = {
+
+    ExportFormat.EXCEL: (
+        ExcelExporter,
+        "xlsx",
+    ),
+
+    ExportFormat.CSV: (
+        CsvExporter,
+        "csv",
+    ),
+
+}
+
+
 class ExportService:
 
     @staticmethod
     def export(
         result: SearchResult,
-        exporter: Exporter,
-        output_path: str,
-    ) -> None:
+        format: ExportFormat,
+    ) -> str:
+
+        exporter_class, extension = EXPORTERS[
+            format
+        ]
+
+        filename = build_output_filename(
+            result.query,
+            extension,
+        )
+
+        exporter = exporter_class()
 
         exporter.export(
             result=result,
-            output_path=output_path,
+            output_path=filename,
         )
+
+        return filename
+    
