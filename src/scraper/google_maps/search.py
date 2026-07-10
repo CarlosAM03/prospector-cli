@@ -1,13 +1,22 @@
+from models.search_query import SearchQuery
+
 from .selectors import RESULT_FEED
 
 
-def create_search_page(browser, query):
+def create_search_page(
+    browser,
+    query: SearchQuery
+):
 
     page = browser.new_page()
 
+    search_text = (
+        f"{query.keyword} {query.location}"
+    )
+
     url = (
         "https://www.google.com/maps/search/"
-        + query.replace(" ", "+")
+        + search_text.replace(" ", "+")
     )
 
     page.goto(url)

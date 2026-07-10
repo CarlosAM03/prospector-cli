@@ -40,59 +40,90 @@ The first stable release (v1.0.0) represents the technical proof of concept for 
 
 # v0.3.0 — Business Detail Extraction
 
+**Status:** Completed
+
 ## Objectives
 
-- Open the business detail panel.
-- Complete missing business information.
-- Extract business phone numbers with improved reliability.
-- Extract business website when available.
-- Handle incomplete or unavailable information.
-- Improve extraction reliability.
+- [x] Open the business detail panel.
+- [x] Complete missing business information.
+- [x] Improve address reliability.
+- [x] Improve phone number reliability.
+- [x] Extract business websites.
+- [x] Handle missing information gracefully.
+- [x] Replace locator-based navigation with href-based navigation.
+- [x] Reduce unnecessary synchronization time.
+- [x] Optimize panel extraction using a single JavaScript evaluation.
 
 ---
 
 # v0.4.0 — Export Engine
+
+**Status:** Planned
 
 ## Objectives
 
 - Excel export.
 - CSV export.
 - Standardized output structure.
+- Export pipeline.
+- Output file naming strategy.
 
 ---
 
-# v0.5.0 — Website Inspection
+# v0.5.0 — Selector Engine
+
+**Status:** Planned
+
+## Objectives
+
+- Centralize DOM selectors.
+- Support selector fallbacks.
+- Detect obsolete selectors.
+- Provide reusable DOM querying helpers.
+- Reduce scraper maintenance effort.
+- Allow scraper-specific selector profiles.
+
+---
+
+# v0.6.0 — Website Inspection
+
+**Status:** Planned
 
 ## Objectives
 
 - Visit the business website.
-- Find and extract business email addresses.
+- Find business email addresses.
 - Detect the primary website language.
 - Detect multilingual websites when possible.
 - Validate website availability.
-- Enrich business information with website metadata.
+- Enrich business entities with website metadata.
 
 ---
 
-# v0.6.0 — Search Automation
+# v0.7.0 — Search Automation
+
+**Status:** Planned
 
 ## Objectives
 
-- Automatic result scrolling.
+- Automatic scrolling.
 - Configurable extraction limits.
-- Automatic detail extraction.
 - Stable execution flow.
+- Automatic pagination handling.
+- Automatic lazy-loading support.
 
 ---
 
-# v0.7.0 — Configuration Profiles
+# v0.8.0 — Configuration Profiles
+
+**Status:** Planned
 
 ## Objectives
 
 - Configuration file support.
 - Default execution profile.
 - Custom user profiles.
-- Profile selection from the CLI.
+- CLI profile selection.
 - Interactive input fallback.
 
 ---
@@ -108,13 +139,15 @@ Deliver a complete command-line prospecting engine capable of producing structur
 - Interactive CLI.
 - Configuration profiles.
 - Google Maps scraper.
-- Business data extraction.
+- Structured business extraction.
 - Website inspection.
 - Business normalization.
 - Excel export.
-- Configurable search execution.
+- Configurable execution.
+- Performance metrics.
+- Extensible scraper architecture.
 
-This release serves as the first production-ready proof of concept for validating the engine before its integration into higher-level commercial platforms.
+This release represents the first production-ready proof of concept for validating the engine before its integration into higher-level commercial platforms.
 
 ---
 
@@ -126,6 +159,8 @@ Potential areas include:
 
 - Additional public data sources.
 - Additional export formats.
+- Plugin-based scrapers.
 - Improved normalization strategies.
-- Additional website enrichment.
-- Performance optimizations.
+- Parallel execution.
+- Performance benchmarking.
+- Distributed execution.

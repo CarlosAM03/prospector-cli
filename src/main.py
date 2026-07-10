@@ -1,33 +1,64 @@
-from scraper.google_maps.scraper import search_businesses
+from models.search_query import (
+    SearchQuery,
+    Source,
+)
 
-input_query = input("Ingrese la consulta de búsqueda: ")
-
-empresas = search_businesses(
-    input_query,
-    20
+from scraper.google_maps.scraper import (
+    search_businesses,
 )
 
 
-for index, empresa in enumerate(empresas, start=1):
+keyword = input(
+    "Palabra clave: "
+)
+
+location = input(
+    "Ubicación: "
+)
+
+query = SearchQuery(
+    source=Source.GOOGLE_MAPS,
+    keyword=keyword,
+    location=location,
+)
+
+result = search_businesses(
+    query,
+    limit=20,
+)
+
+print()
+print(
+    f"Se encontraron {result.total_found} negocios."
+)
+print(
+    f"Tiempo de ejecución: {result.execution_time:.2f} segundos."
+)
+print()
+
+for index, business in enumerate(
+    result.businesses,
+    start=1,
+):
 
     print(
-        f"{index}. {empresa.name}"
+        f"{index}. {business.name}"
     )
 
     print(
-        f"   Categoría: {empresa.category}"
+        f"   Categoría: {business.category}"
     )
 
     print(
-        f"   Dirección: {empresa.address}"
+        f"   Dirección: {business.address}"
     )
 
     print(
-        f"   Teléfono: {empresa.phone}"
+        f"   Teléfono: {business.phone}"
     )
-    
+
     print(
-        f"   Sitio web: {empresa.website}"
+        f"   Sitio web: {business.website}"
     )
 
     print()

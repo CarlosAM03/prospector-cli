@@ -1,4 +1,12 @@
+import time
+
 from playwright.sync_api import sync_playwright
+
+from models.search_query import (
+    SearchQuery,
+    Source,
+)
+from models.search_result import SearchResult
 
 from .detail_panel import enrich_business
 from .result_list import extract_businesses
@@ -6,9 +14,11 @@ from .search import create_search_page
 
 
 def search_businesses(
-    query,
-    limit=50
-):
+    query: SearchQuery,
+    limit: int = 50
+) -> SearchResult:
+
+    start_time = time.perf_counter()
 
     with sync_playwright() as playwright:
 
@@ -50,4 +60,12 @@ def search_businesses(
 
         browser.close()
 
-        return businesses
+    execution_time = (
+        time.perf_counter() - start_time
+    )
+
+    return SearchResult(
+        query=query,
+        businesses=businesses,
+        execution_time=execution_time,
+    )
