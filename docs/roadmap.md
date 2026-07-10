@@ -45,7 +45,6 @@ The first stable release (v1.0.0) represents the technical proof of concept for 
 - Open the business detail panel.
 - Complete missing business information.
 - Extract business phone numbers with improved reliability.
-- Extract business email addresses.
 - Extract business website when available.
 - Handle incomplete or unavailable information.
 - Improve extraction reliability.
@@ -67,6 +66,7 @@ The first stable release (v1.0.0) represents the technical proof of concept for 
 ## Objectives
 
 - Visit the business website.
+- Find and extract business email addresses.
 - Detect the primary website language.
 - Detect multilingual websites when possible.
 - Validate website availability.

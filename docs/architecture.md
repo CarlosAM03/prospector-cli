@@ -21,9 +21,14 @@ The architecture is designed around the following principles:
 - Simplicity
 - Extensibility
 - Reusability
+- Performance
 - Configuration over hardcoded behavior
 
 The objective is to make new data sources, exporters and execution profiles easy to integrate without modifying the rest of the system.
+
+Each scraper exposes a common interface to the engine while remaining free to implement its own internal execution pipeline.
+
+This allows every public source to optimize its extraction strategy without affecting the global architecture.
 
 ---
 
@@ -68,7 +73,11 @@ Examples:
 - Industrial directories
 - Future integrations
 
-Each scraper should operate independently from the others.
+Every scraper is isolated from the others.
+
+Each scraper exposes the same public interface while internally implementing the extraction strategy that best fits its source.
+
+The engine only depends on the normalized output produced by the scraper, never on its internal implementation.
 
 ---
 
@@ -88,7 +97,7 @@ Models provide a common representation regardless of the original source.
 
 ### Exporters
 
-Responsible for transforming normalized information into output formats.
+Responsible for transforming normalized information into supported output formats.
 
 Examples:
 
@@ -102,18 +111,25 @@ Exporters never perform data extraction.
 
 ### Utilities
 
-Reusable helper functions shared across the project.
+Reusable helper modules shared across the project.
 
 Examples:
 
 - Logging
-- Text normalization
 - Validation
+- Text normalization
+- Performance measurement
+- DOM helpers
+- Selector helpers
 - Common utilities
+
+Utilities should remain independent from any specific scraper whenever possible.
 
 ---
 
-## Execution Flow
+## Global Execution Flow
+
+The engine follows a single execution pipeline regardless of the selected data source.
 
 ```text
 CLI Arguments
@@ -141,11 +157,65 @@ Normalization
 Validation
        │
        ▼
+Deduplication
+       │
+       ▼
 Exporter
        │
        ▼
 Structured Output
 ```
+
+This pipeline represents the public contract of the engine.
+
+Individual scrapers may implement any internal workflow as long as they produce the expected normalized output.
+
+---
+
+## Internal Scraper Pipelines
+
+Every scraper may define its own internal execution pipeline.
+
+These implementation details are documented independently from the global architecture.
+
+For example, the Google Maps scraper internally separates extraction into multiple phases:
+
+```text
+Result List
+
+↓
+
+Detail Panel
+
+↓
+
+Website Inspection
+
+↓
+
+Business[]
+```
+
+Another scraper may require a completely different workflow depending on the structure and behavior of its target platform.
+
+Keeping these pipelines independent allows each scraper to evolve without impacting the rest of the engine.
+
+---
+
+## Performance Principles
+
+Performance is considered a first-class architectural concern.
+
+Whenever possible, scrapers should:
+
+- Synchronize using state changes instead of fixed delays.
+- Minimize browser round trips.
+- Reduce DOM queries.
+- Batch browser interactions.
+- Measure execution performance.
+- Prefer deterministic synchronization over timeout-based waits.
+
+Performance optimizations should never compromise modularity, readability or maintainability.
 
 ---
 
@@ -157,14 +227,14 @@ The project is organized into independent modules.
 src/
 
 ├── config/
-├── scraper/
-├── models/
 ├── exporters/
+├── models/
+├── scraper/
 ├── utils/
 └── main.py
 ```
 
-User-defined execution profiles are stored separately from the application source code.
+Execution profiles are stored independently from the application source code.
 
 ```text
 configs/
@@ -174,13 +244,31 @@ custom.yml
 ...
 ```
 
-This separation keeps configuration independent from implementation and allows reusable execution profiles.
+Project documentation is organized independently from the implementation.
+
+```text
+docs/
+
+architecture.md
+contributing.md
+roadmap.md
+scripting-pipeline.md
+
+pipelines/
+
+google-maps.md
+yellow-pages.md
+linkedin.md
+...
+```
+
+This separation keeps the global architecture independent from scraper-specific implementation details.
 
 ---
 
 ## Extensibility
 
-The project is designed so that adding a new capability only requires implementing a new module within its corresponding layer.
+The project is designed so that new capabilities can be added without modifying existing architectural layers.
 
 Typical extension points include:
 
@@ -188,10 +276,12 @@ Typical extension points include:
 - New exporters
 - New configuration profiles
 - New validation strategies
+- New selector strategies
+- New website enrichment modules
 
-The remaining architecture should remain unchanged.
+Existing components should remain unchanged whenever possible.
 
-This allows the engine to evolve incrementally while keeping components isolated and maintainable.
+This approach allows the engine to evolve incrementally while keeping modules isolated, reusable and maintainable.
 
 ---
 
@@ -209,5 +299,6 @@ The following responsibilities are explicitly outside the scope of this project:
 - Business analytics
 - Sales workflows
 - Business rules
+- Data persistence
 
-These capabilities should be implemented by external platforms that consume this engine.
+These capabilities belong to external platforms that consume the engine.
