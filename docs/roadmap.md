@@ -58,15 +58,15 @@ The first stable release (v1.0.0) represents the technical proof of concept for 
 
 # v0.4.0 — Export Engine
 
-**Status:** Planned
+**Status:** Completed
 
 ## Objectives
 
-- Excel export.
-- CSV export.
-- Standardized output structure.
-- Export pipeline.
-- Output file naming strategy.
+[x] Excel export.
+[x] CSV export.
+[x] Standardized output structure.
+[x] Export pipeline.
+[x] Output file naming strategy.
 
 ---
 
