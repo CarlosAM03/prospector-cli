@@ -1,41 +1,43 @@
 """
 Selector Engine.
 
-The Selector Engine provides a semantic interface over Playwright
-DOM queries.
+The Selector Engine provides a semantic interface over selector
+profiles.
 
-Instead of querying raw CSS selectors throughout the scraper, the
-engine resolves semantic selector names using a registered profile.
+Instead of exposing raw CSS selectors throughout the scraper, the
+engine resolves semantic selector names using the Selector Registry
+and delegates selector election to the Elector Engine.
 
 Responsibilities
 ----------------
 
-- Resolve selector aliases.
-- Try selector fallbacks.
-- Return Playwright locators.
-- Keep scraper code independent from DOM structure.
+- Resolve semantic selector names.
+- Retrieve selector candidates from a profile.
+- Delegate selector election.
+- Expose convenience Playwright helpers.
 
-The engine never contains scraper logic.
+The Selector Engine never contains scraper logic.
 
-It only performs DOM access.
+It only coordinates selector resolution.
 """
 
 from playwright.sync_api import Locator
 
+from .elector_engine import ElectorEngine
 from .registry import SelectorRegistry
 
 
 class SelectorEngine:
     """
-    Generic selector engine.
+    Semantic selector resolver.
 
     Parameters
     ----------
     page:
-        Playwright page.
+        Playwright page instance.
 
     profile:
-        Registered selector profile name.
+        Registered selector profile.
     """
 
     def __init__(
@@ -44,54 +46,41 @@ class SelectorEngine:
         profile: str,
     ) -> None:
 
-        self.page = page
+        self._registry = SelectorRegistry()
 
-        self.registry = SelectorRegistry()
+        self._elector = ElectorEngine(page)
 
-        self.profile = profile
+        self._profile = profile
+
+    def selectors(
+        self,
+        name: str,
+    ) -> list[str]:
+        """
+        Return every selector candidate associated with
+        a semantic selector name.
+        """
+
+        return self._registry.selectors(
+            self._profile,
+            name,
+        )
 
     def locator(
         self,
         name: str,
     ) -> Locator:
         """
-        Return the first locator matching a semantic selector.
-
-        Every selector registered under the semantic name is
-        attempted in order.
-
-        Returns
-        -------
-        Playwright Locator
-
-        Raises
-        ------
-        LookupError
-
-            If no selector matches.
+        Return the elected locator associated with a
+        semantic selector.
         """
 
-        selectors = self.registry.selectors(
-            self.profile,
-            name,
+        selectors = self.selectors(
+            name
         )
 
-        for selector in selectors:
-
-            locator = self.page.locator(
-                selector
-            )
-
-            try:
-
-                if locator.count() > 0:
-                    return locator
-
-            except Exception:
-                continue
-
-        raise LookupError(
-            f"No selector found for '{name}'."
+        return self._elector.elect(
+            selectors
         )
 
     def optional(
@@ -99,32 +88,35 @@ class SelectorEngine:
         name: str,
     ) -> Locator | None:
         """
-        Return a locator if available.
+        Return a locator when available.
 
-        Returns None when no selector matches.
+        Returns
+        -------
+        Locator | None
         """
 
-        try:
+        selectors = self.selectors(
+            name
+        )
 
-            return self.locator(
-                name
-            )
-
-        except LookupError:
-
-            return None
+        return self._elector.optional(
+            selectors
+        )
 
     def exists(
         self,
         name: str,
     ) -> bool:
         """
-        Check whether a semantic selector exists.
+        Determine whether a semantic selector exists.
         """
 
-        return (
-            self.optional(name)
-            is not None
+        selectors = self.selectors(
+            name
+        )
+
+        return self._elector.exists(
+            selectors
         )
 
     def first(
@@ -157,7 +149,7 @@ class SelectorEngine:
         name: str,
     ) -> int:
         """
-        Return the amount of matching elements.
+        Return the number of matching elements.
         """
 
         return self.locator(
