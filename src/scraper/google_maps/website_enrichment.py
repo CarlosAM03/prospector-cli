@@ -16,7 +16,9 @@ def enrich_websites(
     ----------------
 
     - Inspect every available website.
-    - Merge extracted metadata.
+    - Extract website metadata.
+    - Extract language information.
+    - Extract email information.
     - Preserve Google Maps information.
 
     Businesses without a website are skipped.
@@ -27,57 +29,90 @@ def enrich_websites(
         Enriched businesses.
     """
 
+
     website_engine = WebsiteEngine(
         browser
     )
 
     for business in businesses:
 
+
         if not business.website:
+
             continue
 
-        metadata = website_engine.inspect(
-            business.website
-        )
+        try:
 
-        _merge_metadata(
-            business,
-            metadata,
-        )
+            metadata = website_engine.inspect(
+                business.website
+            )
+
+
+            _merge_metadata(
+                business,
+                metadata,
+            )
+
+
+        except Exception:
+
+            #
+            # Website failures must not
+            # invalidate the scraping pipeline.
+            #
+
+            continue
 
     return businesses
-
 
 def _merge_metadata(
     business: Business,
     metadata,
 ) -> None:
     """
-    Merge Website Engine metadata into a Business.
+    Merge Website Engine metadata into Business.
 
     Existing Google Maps information is never overwritten.
     """
+
+
 
     business.website_title = (
         metadata.title
     )
 
+
     business.website_description = (
         metadata.description
     )
+
 
     business.language = (
         metadata.language
     )
 
+
     business.has_contact_page = (
         metadata.has_contact_page
     )
+
 
     business.has_about_page = (
         metadata.has_about_page
     )
 
+
     business.website_status = (
         metadata.status_code
     )
+
+    #
+    # Email enrichment.
+    #
+    # WebsiteMetadata stores extracted emails.
+    # Business keeps a primary email field.
+    #
+
+    if metadata.emails:
+
+        business.email = metadata.emails[0]

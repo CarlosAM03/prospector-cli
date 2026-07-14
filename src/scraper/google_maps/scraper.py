@@ -38,16 +38,19 @@ def search_businesses(
 
     start_time = time.perf_counter()
 
+
     with sync_playwright() as playwright:
 
         browser = playwright.chromium.launch(
             headless=False,
         )
 
+
         page = create_search_page(
             browser,
             query,
         )
+
 
         #
         # Phase 1
@@ -58,6 +61,7 @@ def search_businesses(
             page=page,
             limit=limit,
         )
+
 
         #
         # Phase 2
@@ -70,6 +74,7 @@ def search_businesses(
             results=results,
         )
 
+
         #
         # Phase 3
         # Inspect business websites.
@@ -80,18 +85,23 @@ def search_businesses(
             businesses=businesses,
         )
 
+
         browser.close()
+
+
 
     execution_time = (
         time.perf_counter()
         - start_time
     )
 
+
     return SearchResult(
         query=query,
         businesses=businesses,
         execution_time=execution_time,
     )
+
 
 
 def _enrich_businesses(
@@ -104,6 +114,7 @@ def _enrich_businesses(
 
     businesses: list[Business] = []
 
+
     for result in results:
 
         business = enrich_business(
@@ -112,8 +123,10 @@ def _enrich_businesses(
             business=result["business"],
         )
 
+
         businesses.append(
             business
         )
+
 
     return businesses

@@ -5,12 +5,36 @@ from models.search_result import SearchResult
 
 
 class CsvExporter(Exporter):
+    """
+    CSV exporter.
+
+    Converts a SearchResult containing enriched Business
+    objects into a structured CSV file.
+
+    The exporter does not perform:
+
+    - Extraction.
+    - Validation.
+    - Enrichment.
+    """
 
     def export(
         self,
         result: SearchResult,
         output_path: str,
     ) -> None:
+        """
+        Export businesses into CSV format.
+
+        Parameters
+        ----------
+        result:
+            Completed search result.
+
+        output_path:
+            Destination CSV file.
+        """
+
 
         with open(
             output_path,
@@ -19,7 +43,10 @@ class CsvExporter(Exporter):
             encoding="utf-8",
         ) as file:
 
-            writer = csv.writer(file)
+            writer = csv.writer(
+                file
+            )
+
 
             writer.writerow(
                 [
@@ -29,8 +56,10 @@ class CsvExporter(Exporter):
                     "Phone",
                     "Email",
                     "Website",
+                    "Language",
                 ]
             )
+
 
             for business in result.businesses:
 
@@ -42,5 +71,6 @@ class CsvExporter(Exporter):
                         business.phone,
                         business.email,
                         business.website,
+                        business.language,
                     ]
                 )

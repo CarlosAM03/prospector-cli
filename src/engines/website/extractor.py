@@ -29,6 +29,7 @@ Parsed Website Data
 
         WebsiteMetadata
 
+
 Responsibilities
 ----------------
 
@@ -50,13 +51,15 @@ from engines.website.metadata import WebsiteMetadataBuilder
 
 from models.website_metadata import WebsiteMetadata
 
-
 class WebsiteExtractor:
     """
     Website extraction pipeline.
     """
 
-    def __init__(self) -> None:
+
+    def __init__(
+        self,
+    ) -> None:
 
         self._metadata = WebsiteMetadataBuilder()
 
@@ -81,6 +84,7 @@ class WebsiteExtractor:
         WebsiteMetadata
         """
 
+
         #
         # Base metadata
         #
@@ -92,9 +96,6 @@ class WebsiteExtractor:
         #
         # Language detection
         #
-        # Future versions may improve language
-        # detection beyond the HTML lang attribute.
-        #
 
         language = self._language.detect(
             parsed
@@ -103,23 +104,20 @@ class WebsiteExtractor:
         if language:
 
             metadata.language = language
-
         #
         # Email extraction
         #
-        # Emails are extracted now so future versions
-        # can enrich Business objects without modifying
-        # the parser or metadata builder.
+        # Emails are discovered from parsed website
+        # information and stored as part of the website
+        # metadata model.
         #
 
-        emails = self._emails.extract(
+        metadata.emails = self._emails.extract(
             parsed
         )
 
         #
-        # Placeholder for future enrichment.
-        #
-        # Examples:
+        # Future enrichment points:
         #
         # - Social networks
         # - WhatsApp
@@ -127,7 +125,5 @@ class WebsiteExtractor:
         # - Technologies
         # - Company size
         #
-
-        _ = emails
 
         return metadata
