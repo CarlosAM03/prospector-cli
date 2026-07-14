@@ -28,7 +28,55 @@ The objective is to make new data sources, exporters and execution profiles easy
 
 Each scraper exposes a common interface to the engine while remaining free to implement its own internal execution pipeline.
 
+Whenever possible, scraper implementations delegate reusable execution behavior to shared engines instead of implementing infrastructure directly.
+
 This allows every public source to optimize its extraction strategy without affecting the global architecture.
+
+### Architectural Rule
+
+Reusable behavior should exist in only one place.
+
+If the same execution logic is required by multiple scrapers, it belongs in an engine.
+
+If the same helper function is required by multiple modules, it belongs in a utility.
+
+Scrapers should remain focused exclusively on implementing the extraction workflow specific to their target source.
+
+---
+
+## Dependency Principles
+
+Prospector CLI follows a unidirectional dependency model.
+
+Reusable infrastructure must never depend on scraper implementations.
+
+Instead, scraper implementations depend on reusable engines and shared modules.
+
+The dependency flow is intentionally organized as follows:
+
+```text
+CLI
+
+↓
+
+Configuration
+
+↓
+
+Scraper
+
+↓
+
+Engines
+
+↓
+
+External Libraries
+```
+
+This architecture allows reusable infrastructure to evolve independently from individual scrapers while minimizing coupling across the project.
+
+Whenever reusable behavior is identified, it should be extracted into an engine instead of being duplicated across scraper implementations.
 
 ---
 
@@ -59,6 +107,28 @@ Configuration may come from:
 - Interactive user input
 
 The configuration system provides a single normalized configuration object to the engine regardless of its origin.
+
+---
+
+### Engines
+
+Engines encapsulate reusable execution behavior shared across multiple scrapers.
+
+Unlike utilities, which provide isolated helper functions, engines coordinate reusable execution workflows and infrastructure shared throughout the engine.
+
+Typical responsibilities include:
+
+- Selector resolution
+- DOM synchronization
+- Validation
+- Normalization
+- Deduplication
+- Website inspection
+- Future reusable execution workflows
+
+Scrapers delegate reusable behavior to engines instead of implementing it directly.
+
+This separation allows infrastructure to evolve independently from scraper implementations while keeping extraction logic focused on source-specific behavior.
 
 ---
 
@@ -116,14 +186,14 @@ Reusable helper modules shared across the project.
 Examples:
 
 - Logging
-- Validation
-- Text normalization
-- Performance measurement
-- DOM helpers
-- Selector helpers
-- Common utilities
+- File naming
+- Text parsing
+- Performance helpers
+- Common helper functions
 
-Utilities should remain independent from any specific scraper whenever possible.
+Utilities should remain stateless whenever possible.
+
+Reusable execution behavior belongs in engines rather than utilities.
 
 ---
 
@@ -169,6 +239,18 @@ Structured Output
 This pipeline represents the public contract of the engine.
 
 Individual scrapers may implement any internal workflow as long as they produce the expected normalized output.
+
+---
+
+## Engine Architecture
+
+Reusable execution behavior is organized into specialized engines.
+
+Each engine owns a single infrastructure responsibility and may be reused by multiple scrapers.
+
+Engines expose reusable interfaces while remaining independent from scraper implementations.
+
+This approach reduces duplicated logic, minimizes coupling and improves long-term maintainability as additional data sources are introduced.
 
 ---
 
@@ -233,6 +315,8 @@ The project is organized into independent modules.
 src/
 
 ├── config/
+├── engines/
+│   └── selector/
 ├── exporters/
 ├── models/
 ├── scraper/
@@ -278,11 +362,14 @@ The project is designed so that new capabilities can be added without modifying 
 Typical extension points include:
 
 - New scrapers
+- New engines
 - New exporters
 - New configuration profiles
-- New validation strategies
-- New selector strategies
+- New validation modules
+- New normalization modules
 - New website enrichment modules
+
+Whenever new reusable behavior is introduced, it should be implemented as an engine rather than embedded inside scraper implementations.
 
 Existing components should remain unchanged whenever possible.
 

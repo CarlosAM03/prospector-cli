@@ -29,13 +29,13 @@ Scraper
 Raw Data
  │
  ▼
-Normalization
+Normalization Engine
  │
  ▼
-Validation
+Validation Engine
  │
  ▼
-Deduplication
+Deduplication Engine
  │
  ▼
 Exporter

@@ -70,19 +70,20 @@ The first stable release (v1.0.0) represents the technical proof of concept for 
 
 ---
 
-# v0.5.0 — Selector Engine
+# v0.5.0 — Selector Infrastructure
 
-**Status:** Planned
+Status: Completed
 
 ## Objectives
 
-- Centralize DOM selectors.
-- Support selector fallbacks.
-- Detect obsolete selectors.
-- Provide reusable DOM querying helpers.
-- Reduce scraper maintenance effort.
-- Allow scraper-specific selector profiles.
-
+[x] Introduce Selector Engine.
+[x] Introduce Elector Engine.
+[x] Implement selector registry.
+[x] Support semantic selector profiles.
+[x] Decouple scraper logic from DOM selectors.
+[x] Centralize selector resolution.
+[x] Support selector fallback strategies.
+[x] Prepare synchronization engine
 ---
 
 # v0.6.0 — Website Inspection
