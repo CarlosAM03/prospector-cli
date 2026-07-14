@@ -4,12 +4,16 @@ from playwright.sync_api import TimeoutError
 
 from models.business import Business
 
+from .selectors import create_selector_engine
 
-def extract_place_id(href: str) -> str | None:
+
+def extract_place_id(
+    href: str,
+) -> str | None:
 
     match = re.search(
         r"1s([^!]+)",
-        href
+        href,
     )
 
     if match:
@@ -21,13 +25,19 @@ def extract_place_id(href: str) -> str | None:
 def enrich_business(
     page,
     href,
-    business: Business
+    business: Business,
 ) -> Business:
 
-    place_id = extract_place_id(href)
+    place_id = extract_place_id(
+        href
+    )
 
     if place_id is None:
         return business
+
+    selector = create_selector_engine(
+        page
+    )
 
     #
     # Click mediante JavaScript
@@ -47,11 +57,11 @@ def enrich_business(
 
         }
         """,
-        href
+        href,
     )
 
     #
-    # Esperar únicamente el cambio del panel
+    # Esperar cambio de panel
     #
 
     try:
@@ -67,7 +77,7 @@ def enrich_business(
             }
             """,
             arg=place_id,
-            timeout=3000
+            timeout=3000,
         )
 
     except TimeoutError:
@@ -75,35 +85,61 @@ def enrich_business(
         return business
 
     #
-    # Leer todo el panel en una sola llamada JS
+    # Resolver selectores semánticos
+    #
+
+    address_selector = (
+        selector.selectors(
+            "address"
+        )[0]
+    )
+
+    phone_selector = (
+        selector.selectors(
+            "phone"
+        )[0]
+    )
+
+    website_selector = (
+        selector.selectors(
+            "website"
+        )[0]
+    )
+
+    #
+    # Leer panel completo
     #
 
     data = page.evaluate(
         """
-        () => ({
+        selectors => ({
 
             address:
                 document.querySelector(
-                    "button[data-item-id='address'] .Io6YTe"
+                    selectors.address
                 )?.innerText ?? null,
 
             phone:
                 document.querySelector(
-                    "a[data-item-id^='phone:'] .Io6YTe"
+                    selectors.phone
                 )?.innerText ?? null,
 
             website:
                 document.querySelector(
-                    "a[data-item-id='authority']"
+                    selectors.website
                 )?.href ?? null
 
         })
-        """
+        """,
+        {
+            "address": address_selector,
+            "phone": phone_selector,
+            "website": website_selector,
+        },
     )
 
     #
-    # Merge de información
-    # Nunca degradar datos existentes.
+    # Merge sin degradar información existente
     #
 
     if data["address"]:

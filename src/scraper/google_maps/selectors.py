@@ -1,34 +1,39 @@
 """
-Google Maps selectors.
+Google Maps selector factory.
 
+This module provides the Selector Engine configured for the
+Google Maps selector profile.
+
+Scraper modules should never import selector profiles directly.
+
+Instead, they should request a configured SelectorEngine
+through this factory.
 """
 
-RESULT_FEED = "div[role='feed']"
+from engines.selector.selector_engine import SelectorEngine
 
-RESULT_LINK = "a[href*='/maps/place/']"
 
-RESULT_ARTICLE = "xpath=ancestor::div[@role='article']"
+PROFILE_NAME = "google_maps"
 
-INFO_BLOCK = "div.W4Efsd"
 
-# Detail panel
+def create_selector_engine(
+    page,
+) -> SelectorEngine:
+    """
+    Create a Selector Engine configured for Google Maps.
 
-DETAIL_PANEL = "div[role='main']"
+    Parameters
+    ----------
+    page:
+        Playwright page instance.
 
-ADDRESS_BUTTON = "button[data-item-id='address']"
+    Returns
+    -------
+    SelectorEngine
+        Configured selector engine.
+    """
 
-ADDRESS_TEXT = (
-    "button[data-item-id='address'] .Io6YTe"
-)
-
-WEBSITE_LINK = (
-    "a[data-item-id='authority']"
-)
-
-PHONE_LINK = (
-    "a[data-item-id^='phone:']"
-)
-
-PHONE_TEXT = (
-    "a[data-item-id^='phone:'] .Io6YTe"
-)
+    return SelectorEngine(
+        page=page,
+        profile=PROFILE_NAME,
+    )

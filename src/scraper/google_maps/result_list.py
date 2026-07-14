@@ -1,19 +1,22 @@
 from models.business import Business
 
 from .parser import parse_business_summary
-from .selectors import (
-    RESULT_LINK,
-    RESULT_ARTICLE,
-    INFO_BLOCK,
-)
+from .selectors import create_selector_engine
 
 
-def extract_businesses(page, limit):
+def extract_businesses(
+    page,
+    limit: int,
+):
 
     businesses = []
 
-    links = page.locator(
-        RESULT_LINK
+    selector = create_selector_engine(
+        page
+    )
+
+    links = selector.locator(
+        "results"
     )
 
     print(
@@ -23,7 +26,7 @@ def extract_businesses(page, limit):
 
     total = min(
         links.count(),
-        limit
+        limit,
     )
 
     for index in range(total):
@@ -38,20 +41,24 @@ def extract_businesses(page, limit):
             "href"
         )
 
+        if not name or not href:
+            continue
+
         article = link.locator(
-            RESULT_ARTICLE
+            selector.selectors(
+                "result_article"
+            )[0]
         )
 
         info_blocks = article.locator(
-            INFO_BLOCK
+            selector.selectors(
+                "info_block"
+            )[0]
         )
 
         category, address, phone = parse_business_summary(
             info_blocks
         )
-
-        if not name or not href:
-            continue
 
         businesses.append(
             {
@@ -60,8 +67,8 @@ def extract_businesses(page, limit):
                     name=name,
                     category=category,
                     address=address,
-                    phone=phone
-                )
+                    phone=phone,
+                ),
             }
         )
 

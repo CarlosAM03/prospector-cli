@@ -2,10 +2,7 @@ import time
 
 from playwright.sync_api import sync_playwright
 
-from models.search_query import (
-    SearchQuery,
-    Source,
-)
+from models.search_query import SearchQuery
 from models.search_result import SearchResult
 
 from .detail_panel import enrich_business
@@ -15,7 +12,7 @@ from .search import create_search_page
 
 def search_businesses(
     query: SearchQuery,
-    limit: int = 50
+    limit: int = 50,
 ) -> SearchResult:
 
     start_time = time.perf_counter()
@@ -23,35 +20,37 @@ def search_businesses(
     with sync_playwright() as playwright:
 
         browser = playwright.chromium.launch(
-            headless=False
+            headless=False,
         )
 
         page = create_search_page(
             browser,
-            query
+            query,
         )
 
         #
-        # Fase 1
+        # Phase 1
+        # Extract search results.
         #
 
         results = extract_businesses(
-            page,
-            limit
+            page=page,
+            limit=limit,
         )
 
         businesses = []
 
         #
-        # Fase 2
+        # Phase 2
+        # Enrich every business using the detail panel.
         #
 
         for result in results:
 
             business = enrich_business(
-                page,
-                result["href"],
-                result["business"]
+                page=page,
+                href=result["href"],
+                business=result["business"],
             )
 
             businesses.append(
@@ -61,7 +60,8 @@ def search_businesses(
         browser.close()
 
     execution_time = (
-        time.perf_counter() - start_time
+        time.perf_counter()
+        - start_time
     )
 
     return SearchResult(

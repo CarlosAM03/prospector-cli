@@ -1,11 +1,11 @@
 from models.search_query import SearchQuery
 
-from .selectors import RESULT_FEED
+from .selectors import create_selector_engine
 
 
 def create_search_page(
     browser,
-    query: SearchQuery
+    query: SearchQuery,
 ):
 
     page = browser.new_page()
@@ -21,8 +21,15 @@ def create_search_page(
 
     page.goto(url)
 
-    page.wait_for_selector(
-        RESULT_FEED
+    selector = create_selector_engine(
+        page
+    )
+
+    selector.locator(
+        "feed"
+    ).wait_for(
+        state="visible",
+        timeout=10000,
     )
 
     print(page.title())
@@ -33,7 +40,7 @@ def create_search_page(
     with open(
         "maps_debug.html",
         "w",
-        encoding="utf-8"
+        encoding="utf-8",
     ) as file:
 
         file.write(html)
