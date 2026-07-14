@@ -10,6 +10,9 @@ from .selectors import create_selector_engine
 def extract_place_id(
     href: str,
 ) -> str | None:
+    """
+    Extract the Google Maps Place ID from a business href.
+    """
 
     match = re.search(
         r"1s([^!]+)",
@@ -24,9 +27,27 @@ def extract_place_id(
 
 def enrich_business(
     page,
-    href,
+    href: str,
     business: Business,
 ) -> Business:
+    """
+    Enrich a Business using the Google Maps detail panel.
+
+    Responsibilities
+    ----------------
+
+    - Open the detail panel.
+    - Wait for the selected business.
+    - Read address.
+    - Read phone.
+    - Read website.
+    - Merge information into the Business model.
+
+    This function intentionally does NOT inspect websites.
+
+    Website enrichment belongs to the Website Engine and is
+    executed during Phase 3 of the Google Maps pipeline.
+    """
 
     place_id = extract_place_id(
         href
@@ -40,7 +61,7 @@ def enrich_business(
     )
 
     #
-    # Click mediante JavaScript
+    # Open detail panel.
     #
 
     page.evaluate(
@@ -51,7 +72,7 @@ def enrich_business(
                 `a[href="${href}"]`
             );
 
-            if(link){
+            if (link) {
                 link.click();
             }
 
@@ -61,7 +82,8 @@ def enrich_business(
     )
 
     #
-    # Esperar cambio de panel
+    # Wait until Google Maps updates
+    # the displayed business.
     #
 
     try:
@@ -85,7 +107,7 @@ def enrich_business(
         return business
 
     #
-    # Resolver selectores semánticos
+    # Resolve semantic selectors.
     #
 
     address_selector = (
@@ -107,7 +129,8 @@ def enrich_business(
     )
 
     #
-    # Leer panel completo
+    # Read the complete detail panel
+    # using a single JavaScript evaluation.
     #
 
     data = page.evaluate(
@@ -139,7 +162,7 @@ def enrich_business(
     )
 
     #
-    # Merge sin degradar información existente
+    # Merge Google Maps information.
     #
 
     if data["address"]:

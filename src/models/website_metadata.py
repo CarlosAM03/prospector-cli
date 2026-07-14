@@ -36,3 +36,6 @@ class WebsiteMetadata:
     has_contact_page: bool = False
 
     has_about_page: bool = False
+    
+    status_code: int | None = None
+    

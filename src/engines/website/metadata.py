@@ -1,31 +1,29 @@
 """
 Website Metadata Builder.
 
-The Metadata Builder transforms parsed website information
-into a structured WebsiteMetadata model.
+The Metadata Builder creates WebsiteMetadata objects from
+already extracted website information.
 
 Responsibilities
 ----------------
 
-- Build WebsiteMetadata objects.
-- Normalize metadata values.
-- Extract derived website information.
-- Detect common website sections.
+- Build WebsiteMetadata instances.
+- Normalize optional values.
+- Extract the website domain.
 
 The Metadata Builder does not:
 
 - Crawl websites.
 - Parse HTML.
-- Perform HTTP requests.
+- Detect languages.
+- Search for contact pages.
+- Extract emails.
 """
 
 
-from urllib.parse import (
-    urlparse,
-)
+from urllib.parse import urlparse
 
 from models.website_metadata import WebsiteMetadata
-
 
 
 class WebsiteMetadataBuilder:
@@ -33,32 +31,24 @@ class WebsiteMetadataBuilder:
     Builder responsible for creating WebsiteMetadata objects.
     """
 
-
-
     def build(
         self,
         data: dict,
     ) -> WebsiteMetadata:
         """
-        Build WebsiteMetadata from parsed website data.
+        Build a WebsiteMetadata instance.
 
         Parameters
         ----------
-
         data:
-            Parsed website information.
+            Already extracted website information.
 
         Returns
         -------
-
         WebsiteMetadata
         """
 
-
-        url = data.get(
-            "url"
-        )
-
+        url = data.get("url")
 
         return WebsiteMetadata(
 
@@ -66,46 +56,33 @@ class WebsiteMetadataBuilder:
                 data.get("title")
             ),
 
-
             description=self._clean(
                 data.get("description")
             ),
-
 
             language=self._clean(
                 data.get("language")
             ),
 
-
             domain=self._domain(
                 url
             ),
 
-
             final_url=url,
 
-
-            has_contact_page=self._has_page(
-                data.get("links", []),
-                [
-                    "contact",
-                    "contacto",
-                ],
+            has_contact_page=data.get(
+                "has_contact_page",
+                False,
             ),
 
-
-            has_about_page=self._has_page(
-                data.get("links", []),
-                [
-                    "about",
-                    "about-us",
-                    "nosotros",
-                    "empresa",
-                ],
+            has_about_page=data.get(
+                "has_about_page",
+                False,
+            ),
+            status_code=data.get(
+                "status_code"
             ),
         )
-
-
 
     def _clean(
         self,
@@ -116,13 +93,9 @@ class WebsiteMetadataBuilder:
         """
 
         if not value:
-
             return None
 
-
         return value.strip()
-
-
 
     def _domain(
         self,
@@ -133,43 +106,6 @@ class WebsiteMetadataBuilder:
         """
 
         if not url:
-
             return None
 
-
-        parsed = urlparse(
-            url
-        )
-
-
-        return parsed.netloc
-
-
-
-    def _has_page(
-        self,
-        links: list[str],
-        keywords: list[str],
-    ) -> bool:
-        """
-        Detect whether a website contains
-        a common internal section.
-        """
-
-
-        for link in links:
-
-            normalized = (
-                link
-                .lower()
-            )
-
-
-            for keyword in keywords:
-
-                if keyword in normalized:
-
-                    return True
-
-
-        return False
+        return urlparse(url).netloc
