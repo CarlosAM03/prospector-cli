@@ -88,16 +88,16 @@ Status: Completed
 
 # v0.6.0 — Website Inspection
 
-**Status:** Planned
+**Status:** Completed
 
 ## Objectives
 
-- Visit the business website.
-- Find business email addresses.
-- Detect the primary website language.
-- Detect multilingual websites when possible.
-- Validate website availability.
-- Enrich business entities with website metadata.
+[x] Visit the business website.
+[x] Find business email addresses.
+[x] Detect the primary website language.
+[x] Detect multilingual websites when possible.
+[x] Validate website availability.
+[x] Enrich business entities with website metadata.
 
 ---
 
