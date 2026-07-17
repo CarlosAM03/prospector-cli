@@ -9,24 +9,19 @@ Responsibilities
 
 - Create browser pages.
 - Open Google Maps.
-- Return a ready Playwright page.
+- Execute searches through the Google Maps UI.
 
-The navigation implementation intentionally does not perform:
-
-- Search execution.
-- Selector resolution.
-- Synchronization.
-- Scraping.
-- Data extraction.
-
-Its only responsibility during v0.7.0 Commit 1 is opening the
-Google Maps application.
+Navigation synchronization remains intentionally minimal during
+Commit 2. Advanced synchronization will be introduced in the next
+commit.
 """
 
 from playwright.sync_api import (
     Browser,
     Page,
 )
+
+from engines.selector import SelectorEngine
 
 
 class GoogleMapsNavigation:
@@ -68,3 +63,35 @@ class GoogleMapsNavigation:
         )
 
         return page
+
+    def search(
+        self,
+        page: Page,
+        query: str,
+    ) -> None:
+        """
+        Execute a search using the Google Maps interface.
+
+        Parameters
+        ----------
+        page:
+            Active Playwright page.
+
+        query:
+            Search text.
+        """
+
+        selector = SelectorEngine(page)
+
+        search_box = selector.locator(
+            "search_box"
+        )
+
+        search_box.wait_for(
+            state="visible",
+            timeout=10000,
+        )
+
+        search_box.fill(query)
+
+        search_box.press("Enter")

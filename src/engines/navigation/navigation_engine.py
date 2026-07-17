@@ -63,3 +63,26 @@ class NavigationEngine:
         """
 
         return self._navigation.open()
+
+    def search(
+        self,
+        page: Page,
+        query: str,
+    ) -> None:
+        """
+        Execute a search using the configured navigation
+        implementation.
+
+        Parameters
+        ----------
+        page:
+            Active Playwright page.
+
+        query:
+            Search text.
+        """
+
+        self._navigation.search(
+            page,
+            query,
+        )

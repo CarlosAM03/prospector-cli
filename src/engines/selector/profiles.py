@@ -4,57 +4,64 @@ Selector profiles.
 A selector profile contains every DOM selector required by a
 specific scraper implementation.
 
-Profiles are intentionally isolated from the scraper logic so
+Profiles are intentionally isolated from scraper logic so
 selectors can evolve independently from extraction algorithms.
 
 Every selector is identified by a semantic name instead of a
 CSS selector.
 
-Example:
-
-feed
-results
-phone
-website
-
-instead of
-
-div[role='feed']
-a[data-item-id='authority']
-
-Future scrapers may provide their own selector profiles while
-reusing the same Selector Engine.
+Future scraper improvements should extend selector profiles
+instead of introducing raw CSS selectors throughout the codebase.
 """
-
 
 GOOGLE_MAPS_PROFILE = {
 
     #
-    # Search results
+    # Navigation
+    #
+
+    "home_logo": [
+        "a[aria-label='Google Maps']",
+    ],
+
+    "search_box": [
+        "input#searchboxinput",
+    ],
+
+    "search_button": [
+        "button#searchbox-searchbutton",
+    ],
+
+    #
+    # Search page
     #
 
     "feed": [
-
         "div[role='feed']",
-
     ],
 
     "results": [
-
         "a[href*='/maps/place/']",
-
     ],
 
     "result_article": [
-
         "xpath=ancestor::div[@role='article']",
-
     ],
 
     "info_block": [
-
         "div.W4Efsd",
+    ],
 
+    #
+    # Lazy loading
+    #
+
+    "loading": [
+        "div[role='progressbar']",
+    ],
+
+    "spinner": [
+        "div[role='progressbar']",
     ],
 
     #
@@ -62,39 +69,26 @@ GOOGLE_MAPS_PROFILE = {
     #
 
     "detail_panel": [
-
         "div[role='main']",
-
     ],
 
     "business_name": [
-
         "h1",
-
     ],
 
     "address_button": [
-
         "button[data-item-id='address']",
-
     ],
 
     "address": [
-
         "button[data-item-id='address'] .Io6YTe",
-
     ],
 
     "phone": [
-
         "a[data-item-id^='phone:'] .Io6YTe",
-
     ],
 
     "website": [
-
         "a[data-item-id='authority']",
-
     ],
-
 }
