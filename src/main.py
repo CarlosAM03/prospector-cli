@@ -170,7 +170,7 @@ def execute_search() -> None:
 
     result = search_businesses(
         query=query,
-        limit=20,
+        limit=500,
     )
 
 
