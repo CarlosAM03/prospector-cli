@@ -26,7 +26,7 @@ maps_debug.html
 # Environment variables
 .env
 
-*temp.md
-
+# Temporal documantation and results files 
+*.md
 *.csv
 *.xlsx

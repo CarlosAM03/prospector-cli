@@ -28,6 +28,8 @@ from playwright.sync_api import (
     Page,
 )
 
+from models.search_query import Source
+
 from .google_maps_navigation import GoogleMapsNavigation
 
 
@@ -42,13 +44,23 @@ class NavigationEngine:
     """
 
     def __init__(
-        self,
-        browser: Browser,
-    ) -> None:
+            self,
+            browser: Browser,
+            source: Source,
+        ) -> None:
 
-        self._navigation = GoogleMapsNavigation(
-            browser
-        )
+            if source == Source.GOOGLE_MAPS:
+
+                self._navigation = GoogleMapsNavigation(
+                    browser=browser,
+                    profile="google_maps",
+                )
+
+            else:
+
+                raise ValueError(
+                    f"Unsupported navigation source: {source}"
+                )
 
     def open(
         self,

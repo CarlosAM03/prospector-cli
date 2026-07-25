@@ -103,7 +103,7 @@ Status: Completed
 
 # v0.7.0 — Search Automation
 
-**Status:** Planned
+**Status:** In progress
 
 ## Objectives
 

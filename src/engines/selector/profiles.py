@@ -25,7 +25,8 @@ GOOGLE_MAPS_PROFILE = {
     ],
 
     "search_box": [
-        "input#searchboxinput",
+        'input[name="q"]',
+        'input[role="combobox"]',
     ],
 
     "search_button": [

@@ -4,9 +4,11 @@
 
 This document describes the internal execution pipeline of the Google Maps scraper.
 
-Unlike the global engine pipeline, this document focuses exclusively on how the Google Maps integration retrieves and enriches business information.
+Unlike the global engine pipeline, this document focuses exclusively on how the Google Maps integration retrieves, validates and incrementally enriches business information.
 
 The scraper is responsible only for interacting with Google Maps and producing normalized business entities for the engine.
+
+The extraction process is organized as a deterministic multi-phase pipeline. Each phase has a single responsibility and must satisfy its own execution contract before transferring control to the next stage.
 
 ---
 
@@ -14,13 +16,53 @@ The scraper is responsible only for interacting with Google Maps and producing n
 
 The Google Maps scraper follows the same architectural principles as the rest of Prospector CLI:
 
-- Single responsibility
-- Modularity
-- Performance
-- Deterministic synchronization
-- Source independence
+* Single responsibility
+* Modularity
+* Performance
+* Deterministic synchronization
+* Identity-based enrichment
+* Source independence
 
 Its internal implementation may evolve without affecting the global execution pipeline.
+
+---
+
+# Pipeline Contracts
+
+The scraper is organized around explicit contracts between phases.
+
+Each phase guarantees a valid postcondition before the following phase begins.
+
+```text
+Navigation Engine
+        │
+        │ Guarantees:
+        │ Google Maps is open and the search has been executed.
+        ▼
+LazyCharge Engine
+        │
+        │ Guarantees:
+        │ Every available search result has been loaded.
+        ▼
+Identity Registration
+        │
+        │ Guarantees:
+        │ Every Business has a stable identity.
+        ▼
+Detail Panel Enrichment
+        │
+        │ Guarantees:
+        │ The opened detail panel belongs to the expected Business.
+        ▼
+Website Engine
+        │
+        │ Guarantees:
+        │ Website metadata belongs to the validated Business.
+        ▼
+SearchResult
+```
+
+This contract-based design reduces synchronization issues between phases and keeps responsibilities clearly separated.
 
 ---
 
@@ -28,11 +70,11 @@ Its internal implementation may evolve without affecting the global execution pi
 
 Google Maps is a Single Page Application (SPA).
 
-Selecting a business does not perform a page navigation.
+Selecting a business does not trigger a browser navigation.
 
-Instead, JavaScript updates the content of the existing detail panel.
+Instead, JavaScript dynamically replaces the content of the existing detail panel.
 
-For this reason, synchronization is performed by observing application state changes rather than browser navigation events.
+For this reason, synchronization is based on application state transitions rather than browser navigation events.
 
 The scraper follows one fundamental rule:
 
@@ -50,56 +92,98 @@ or
 time.sleep(...)
 ```
 
-should never be used.
+must never be used.
 
-Instead, every interaction should wait only for the specific state change required by the next operation.
+Every interaction must wait only for the specific application state required by the following operation.
 
-This strategy minimizes execution time while improving extraction reliability.
+Synchronization is therefore deterministic, reproducible and independent of arbitrary timing assumptions.
 
 ---
 
 # Performance Strategy
 
-To reduce browser overhead, the scraper follows these optimization principles:
+To reduce browser overhead while preserving extraction reliability, the scraper follows these optimization principles:
 
-- Store immutable identifiers instead of live locators.
-- Use JavaScript when browser interaction is unnecessary.
-- Minimize browser round trips.
-- Read multiple DOM values in a single browser evaluation.
-- Synchronize using deterministic DOM changes.
+* Store immutable business identities instead of live DOM references.
+* Store stable business identifiers instead of Playwright locators.
+* Use JavaScript whenever browser interaction is unnecessary.
+* Minimize browser round trips.
+* Read multiple DOM values using a single browser evaluation.
+* Synchronize through deterministic application state changes.
+* Perform independent enrichment passes without repeating previous work.
 
 These optimizations improve execution speed without increasing architectural complexity.
 
 ---
 
+# Incremental Enrichment Strategy
+
+Business extraction is intentionally divided into independent enrichment passes.
+
+Each phase enriches the same Business entities while preserving every previously validated attribute.
+
+The pipeline never restarts from the beginning after completing a successful phase.
+
+This strategy provides several advantages:
+
+* previously extracted information is preserved;
+* failures remain isolated to the current phase;
+* retry strategies can be implemented without repeating earlier work;
+* every Business evolves incrementally until fully populated;
+* the pipeline remains resilient without introducing unnecessary complexity.
+
+---
+
+# Business Identity
+
+Business identity is established during the first extraction pass.
+
+Each Business stores immutable information that allows subsequent phases to reliably identify the corresponding result.
+
+The identity is composed of stable attributes collected from the result list, including:
+
+* Internal extraction index
+* Business name
+* Google Maps href
+
+Subsequent enrichment phases must validate this identity before updating the Business.
+
+The scraper therefore operates on business identity rather than temporary DOM position.
+
+This prevents asynchronous interface updates from associating extracted information with the wrong entity.
+
+---
+
 # Execution Phases
 
-## Phase 1 — Result List Extraction
+## Phase 1 — Navigation
 
-The scraper scans the search results and creates an initial collection of business entities.
+Navigation is fully delegated to the Navigation Engine.
 
-Information extracted during this phase includes:
+Its responsibility ends when Google Maps has executed the requested search and the result list is available.
 
-- Business name
-- Category
-- Address (when available)
-- Phone number (when available)
-- Google Maps href
+Responsibilities:
 
-The collected href is stored instead of the Playwright Locator.
-
-This makes the collected data independent from future DOM changes.
+* Open Google Maps.
+* Resolve search UI selectors.
+* Write the complete search query.
+* Execute the search.
+* Wait until the search results become available.
 
 ```text
-Search Results
+SearchQuery
 
 ↓
 
-Business[]
+Navigation Engine
 
 ↓
 
-Store href
+Google Maps
+
+↓
+
+Search Executed
 
 ↓
 
@@ -108,84 +192,204 @@ End Phase
 
 ---
 
-## Phase 2 — Detail Panel Enrichment
+## Phase 2 — Result Preparation
 
-Each stored href is processed individually.
+Result preparation is fully delegated to the LazyCharge Engine.
 
-The scraper performs the following steps:
+The scraper does not know how results are loaded.
 
-1. Locate the result using its href.
-2. Trigger the click through JavaScript.
-3. Wait until the business displayed in the detail panel changes.
-4. Read every required field from the panel using a single JavaScript evaluation.
-5. Update the Business model.
+Its only expectation is that the complete result set is ready before extraction begins.
+
+Responsibilities:
+
+* Wait for the result feed.
+* Perform automatic scrolling.
+* Synchronize dynamic loading.
+* Detect loading completion.
+* Guarantee that every available result has been loaded.
+
+```text
+Search Results
+
+↓
+
+LazyCharge Engine
+
+↓
+
+Wait Feed
+
+↓
+
+Automatic Scroll
+
+↓
+
+Synchronization
+
+↓
+
+Loading Complete
+
+↓
+
+End Phase
+```
+
+---
+
+## Phase 3 — Identity Registration
+
+The scraper performs the first extraction pass over the loaded result list.
+
+Only summary information is collected during this phase.
+
+No enrichment is performed.
+
+Information extracted includes:
+
+* Internal extraction index
+* Business name
+* Category
+* Address (when available)
+* Phone number (when available)
+* Google Maps href
+
+The collected information creates the initial Business collection.
+
+```text
+Loaded Results
+
+↓
+
+Read Summary
+
+↓
+
+Create Business
+
+↓
+
+Assign Internal Identity
+
+↓
+
+Store href
+
+↓
+
+Business[]
+
+↓
+
+End Phase
+```
+
+---
+
+## Phase 4 — Detail Panel Enrichment
+
+Each Business is processed independently.
+
+Before enriching any information, the scraper validates that the currently opened detail panel belongs to the expected Business.
+
+Only after successful validation is the Business updated.
+
+Responsibilities:
+
+1. Locate the business using its stored identity.
+2. Open the corresponding detail panel.
+3. Wait for the panel update.
+4. Validate Business identity.
+5. Read every required field using a single JavaScript evaluation.
+6. Update the Business.
+
+Typical information extracted includes:
+
+* Full address
+* Phone number
+* Website
+
+Future versions may enrich additional business attributes during this phase.
 
 ```text
 Business
 
 ↓
 
-Click using href
+Locate Business
 
 ↓
 
-Wait for business change
+Open Detail Panel
 
 ↓
 
-Read complete panel
+Wait Panel Update
+
+↓
+
+Validate Identity
+
+↓
+
+Read Complete Panel
 
 ↓
 
 Update Business
+
+↓
+
+Next Business
 ```
 
-Typical information extracted during this phase:
+If identity validation fails, the Business is not updated until the correct result has been located.
 
-- Address
-- Phone number
-- Website
-
-Future versions may enrich additional business attributes here.
+This guarantees deterministic enrichment and prevents cross-association between businesses.
 
 ---
 
-## Phase 3 — Website Inspection
+## Phase 5 — Website Inspection
 
-If a business provides a website, the scraper delegates its inspection to a reusable website extraction module.
+Once a Business has been validated and enriched with its Google Maps information, website inspection is delegated to the Website Engine.
 
-The Google Maps scraper is responsible only for providing the website URL.
+The Google Maps scraper is responsible only for providing the validated website URL.
 
-Website analysis is intentionally separated so it can be reused by future scrapers.
+Website analysis remains completely reusable by future scraper implementations.
 
 Typical workflow:
 
 ```text
-Business
+Validated Business
 
 ↓
 
-Website available?
+Website Available?
 
 ↓
 
-Open website
+Website Engine
 
 ↓
 
-Extract email
+Extract Email
 
 ↓
 
-Detect language
+Detect Language
 
 ↓
 
-Collect metadata
+Collect Metadata
 
 ↓
 
-Update Business
+Update Same Business
+
+↓
+
+Next Business
 ```
 
 ---
@@ -195,86 +399,40 @@ Update Business
 The complete Google Maps scraper workflow is summarized below.
 
 ```text
+SearchQuery
+        │
+        ▼
+Navigation Engine
+        │
+        ▼
+Search Executed
+        │
+        ▼
+LazyCharge Engine
+        │
+        ▼
+All Results Loaded
+        │
+        ▼
 Phase 1
-====================
-
-Read result list
-
-↓
-
-Create Business[]
-
-↓
-
-Store href
-
-↓
-
-End
-
-
+Identity Registration
+        │
+        ▼
+Business[]
+        │
+        ▼
 Phase 2
-====================
-
-For each Business
-
-↓
-
-Locate using href
-
-↓
-
-JavaScript click
-
-↓
-
-Wait for business change
-
-↓
-
-Read complete detail panel
-
-↓
-
-Update Business
-
-↓
-
-Next Business
-
-
+Detail Panel Enrichment
+        │
+        ▼
+Validated Business
+        │
+        ▼
 Phase 3
-====================
-
-For each Business
-
-↓
-
-Website available?
-
-↓
-
-Open website
-
-↓
-
-Extract email
-
-↓
-
-Detect language
-
-↓
-
-Collect metadata
-
-↓
-
-Close page
-
-↓
-
-Next Business
+Website Inspection
+        │
+        ▼
+SearchResult
 ```
 
 ---
@@ -283,10 +441,14 @@ Next Business
 
 This document describes only the internal behavior of the Google Maps scraper.
 
-From the engine perspective, the scraper behaves as a single pipeline stage.
+From the engine perspective, the scraper behaves as a single execution stage.
 
 ```text
-Query Builder
+SearchQuery
+
+↓
+
+Navigation Engine
 
 ↓
 
@@ -298,15 +460,15 @@ Business[]
 
 ↓
 
-Normalization
+Website Engine
 
 ↓
 
-Validation
+SearchResult
 
 ↓
 
-Exporter
+Export Service
 ```
 
 This separation allows every scraper to implement its own optimized extraction strategy while preserving a consistent architecture throughout the engine.
@@ -315,16 +477,16 @@ This separation allows every scraper to implement its own optimized extraction s
 
 # Future Evolution
 
-The Google Maps scraper is expected to evolve independently from the engine.
+The Google Maps scraper is expected to evolve independently from the rest of the engine.
 
-Potential improvements include:
+Future improvements may include:
 
-- Automatic scrolling.
-- Adaptive extraction strategies.
-- Selector abstraction.
-- Retry policies.
-- Incremental enrichment.
-- Parallel website inspection.
-- Performance metrics.
-- Selector Engine integration.
-- DOM change detection improvements.
+* Adaptive synchronization strategies.
+* Retry policies based on Business identity.
+* Parallel website inspection.
+* Multiple navigation profiles.
+* Additional scraper implementations.
+* Performance telemetry.
+* Incremental checkpoint recovery.
+* Enhanced DOM change detection.
+* Source-specific Navigation Engine implementations.

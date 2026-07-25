@@ -65,7 +65,6 @@ class ElectorEngine:
         for selector in selectors:
 
             try:
-
                 locator = self.page.locator(
                     selector
                 )
@@ -74,12 +73,10 @@ class ElectorEngine:
                     return locator
 
             except Exception:
-
                 #
                 # Ignore invalid selectors and
                 # continue evaluating fallbacks.
-                #
-
+                #                
                 continue
 
         raise LookupError(
