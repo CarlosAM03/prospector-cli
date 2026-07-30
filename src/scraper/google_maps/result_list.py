@@ -14,21 +14,23 @@ def extract_businesses(
     limit: int,
 ):
     """
-    Extract businesses from Google Maps result list.
+    Extract businesses from the Google Maps
+    result list.
 
-    This stage only extracts summary information.
+    This stage is responsible only for the
+    first extraction pass.
 
-    Before extraction, the scraper waits until the
-    results feed is available and progressively loads
-    additional results through virtual scrolling.
+    Responsibilities
+    ----------------
 
-    Parameters
-    ----------
-    page:
-        Playwright page instance.
+    - Wait for the result feed.
+    - Load additional results.
+    - Extract summary information.
+    - Build temporary Business instances.
+    - Generate an internal identity used by
+      later pipeline stages.
 
-    limit:
-        Maximum number of businesses to extract.
+    This stage never opens the detail panel.
     """
 
     businesses = []
@@ -43,13 +45,11 @@ def extract_businesses(
     )
 
     #
-    # Wait until the Google Maps
-    # result feed is visible.
+    # Wait until the result feed
+    # becomes available.
     #
 
-    lazycharge.wait(
-        "feed"
-    )
+    lazycharge.wait_feed()
 
     links = selector.locator(
         "results"
@@ -57,7 +57,7 @@ def extract_businesses(
 
     #
     # Load additional results before
-    # performing the first extraction.
+    # starting the first extraction.
     #
 
     _charge_results(
@@ -68,7 +68,7 @@ def extract_businesses(
 
     print(
         "Lugares encontrados:",
-        links.count()
+        links.count(),
     )
 
     total = min(
@@ -105,15 +105,22 @@ def extract_businesses(
             )[0]
         )
 
-        category, address, phone = (
-            parse_business_summary(
-                info_blocks
-            )
+        (
+            category,
+            address,
+            phone,
+        ) = parse_business_summary(
+            info_blocks
         )
 
         businesses.append(
             {
                 "href": href,
+                "identity": {
+                    "index": index,
+                    "name": name,
+                    "href": href,
+                },
                 "business": Business(
                     name=name,
                     category=category,
@@ -125,7 +132,7 @@ def extract_businesses(
 
     print(
         "Negocios encontrados:",
-        len(businesses)
+        len(businesses),
     )
 
     return businesses
@@ -137,8 +144,14 @@ def _charge_results(
     limit: int,
 ):
     """
-    Scroll the Google Maps result panel until
-    enough results are loaded or loading stops.
+    Progressively load Google Maps
+    search results using virtual
+    scrolling.
+
+    This function is responsible only
+    for loading additional result cards.
+
+    It does not perform extraction.
     """
 
     feed = selector.locator(
@@ -155,7 +168,6 @@ def _charge_results(
 
     max_stable_cycles = 4
 
-
     while True:
 
         current_count = links.count()
@@ -164,7 +176,6 @@ def _charge_results(
             "Antes:",
             current_count,
         )
-
 
         if current_count >= limit:
 
@@ -197,8 +208,8 @@ def _charge_results(
 
 
         #
-        # Scroll únicamente el panel
-        # izquierdo de resultados.
+        # Scroll only the
+        # result feed.
         #
 
         feed.hover()
@@ -208,6 +219,14 @@ def _charge_results(
             1800,
         )
 
+
+        #
+        # Wait for Google Maps
+        # virtual scrolling cycle.
+        #
+        # The loading spinner is not
+        # guaranteed during feed updates.
+        #
 
         page.wait_for_timeout(
             1000,

@@ -121,6 +121,7 @@ def _enrich_businesses(
             page=page,
             href=result["href"],
             business=result["business"],
+            identity=result["identity"],
         )
 
 

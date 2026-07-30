@@ -49,6 +49,8 @@ class LazyChargeEngine:
         page,
         profile: str,
     ) -> None:
+        
+        self._page = page
 
         self._selector = SelectorEngine(
             page=page,
@@ -171,5 +173,105 @@ class LazyChargeEngine:
 
         locator.wait_for(
             state="detached",
+            timeout=timeout,
+        )
+
+    #
+    # SPA synchronization helpers
+    #
+
+    def wait_feed(
+        self,
+        timeout: int = 10000,
+    ) -> Locator:
+        """
+        Wait until the search result feed
+        becomes available.
+        """
+
+        return self.wait(
+            "feed",
+            timeout=timeout,
+        )
+
+    def wait_spinner(
+        self,
+        timeout: int = 3000,
+    ) -> bool:
+        """
+        Wait until the loading spinner finishes.
+
+        SPA aplications does not always display a
+        progress indicator. If no spinner appears,
+        execution continues immediately.
+        """
+
+        spinner = self.optional(
+            "spinner",
+            timeout=500,
+        )
+
+        if spinner is None:
+
+            return False
+
+        self.wait_hidden(
+            "spinner",
+            timeout=timeout,
+        )
+
+        return True
+
+    def wait_detail_panel(
+        self,
+        timeout: int = 10000,
+    ) -> Locator:
+        """
+        Wait until the business detail panel
+        becomes available.
+        """
+
+        locator = self._selector.locator(
+            "detail_panel"
+            ).last
+        
+        locator.wait_for(
+            state="visible",
+            timeout=timeout,
+        )
+        return locator
+    
+    def wait_detail_content(
+        self,
+        timeout: int = 5000,
+    ) -> None:
+        """
+        Wait until the business title has been
+        rendered inside the detail panel.
+        """
+
+        self._page.wait_for_function(
+            """
+            () => {
+
+                const h1 = document.querySelector(
+                    "h1.DUwDvf"
+                );
+
+                if (!h1) {
+
+                    return false;
+
+                }
+
+                const text = h1.innerText.trim();
+
+                return (
+                    text.length > 0 &&
+                    text !== "Resultados"
+                );
+
+            }
+            """,
             timeout=timeout,
         )

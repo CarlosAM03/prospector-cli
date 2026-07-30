@@ -4,10 +4,11 @@ from playwright.sync_api import TimeoutError
 
 from models.business import Business
 
+from engines.selector.lazycharge import LazyChargeEngine
+
 from utils.parser import is_phone
 
 from .selectors import create_selector_engine
-
 
 
 def extract_place_id(
@@ -26,29 +27,37 @@ def extract_place_id(
     return None
 
 
-
 def enrich_business(
     page,
     href,
     business: Business,
+    identity: dict | None = None,
 ) -> Business:
+
+    print(
+        f"\n>>> Enriqueciendo: {business.name}"
+    )
 
     place_id = extract_place_id(
         href
     )
 
-
     if place_id is None:
 
+        print(
+            "  [EXIT] place_id no encontrado."
+        )
+
         return business
-
-
 
     selector = create_selector_engine(
         page
     )
 
-
+    lazycharge = LazyChargeEngine(
+        page=page,
+        profile="google_maps",
+    )
 
     #
     # Open detail panel.
@@ -73,11 +82,43 @@ def enrich_business(
         href,
     )
 
-
+    print(
+        "  ✓ Click realizado."
+    )
 
     #
-    # Synchronize with Google Maps state.
+    # Synchronize detail panel.
     #
+
+    try:
+
+        panel = lazycharge.wait_detail_panel()
+
+        print(
+            "  ✓ Detail panel visible."
+        )
+
+        #lazycharge.wait_detail_content()
+
+        print(
+            "  ✓ Detail content renderizado."
+        )
+
+    except TimeoutError:
+
+        print(
+            "  [EXIT] Timeout esperando detail panel."
+        )
+
+        return business
+
+    #
+    # Validate navigation identity.
+    #
+
+    print(
+        "  → Validando place_id..."
+    )
 
     try:
 
@@ -95,12 +136,76 @@ def enrich_business(
             timeout=3000,
         )
 
+        print(
+            "  ✓ place_id validado."
+        )
 
     except TimeoutError:
 
+        print(
+            "  [EXIT] place_id no coincide."
+        )
+
         return business
 
+    #
+    # Validate business identity.
+    #
 
+    if identity:
+
+        print(
+            "  → Validando nombre..."
+        )
+
+        name_selector = selector.selectors(
+            "business_name"
+        )[0]
+
+        try:
+
+            detail_name = (
+                panel.locator(
+                    name_selector
+                )
+                .last
+                .inner_text()
+                .strip()
+            )
+
+        except Exception:
+
+            detail_name = None
+
+        print(
+            "     Esperado:",
+            identity["name"],
+        )
+
+        print(
+            "     Encontrado:",
+            detail_name,
+        )
+
+        if not detail_name:
+
+            print(
+                "  [EXIT] Nombre vacío."
+            )
+
+            return business
+
+        if detail_name.strip() != identity["name"].strip():
+
+            print(
+                "  [EXIT] Nombre diferente."
+            )
+
+            return business
+
+        print(
+            "  ✓ Nombre validado."
+        )
 
     #
     # Resolve selectors.
@@ -110,53 +215,89 @@ def enrich_business(
         "address"
     )[0]
 
-
     phone_selector = selector.selectors(
         "phone"
     )[0]
-
 
     website_selector = selector.selectors(
         "website"
     )[0]
 
-
+    print(
+        "  → Extrayendo datos..."
+    )
 
     #
     # Extract detail data.
     #
 
-    data = page.evaluate(
-        """
-        selectors => ({
+    try:
 
-            address:
-                document.querySelector(
-                    selectors.address
-                )?.innerText ?? null,
+        address = (
+            panel.locator(
+                address_selector
+            )
+            .last
+            .inner_text()
+        )
+
+    except Exception:
+
+        address = None
 
 
-            phone:
-                document.querySelector(
-                    selectors.phone
-                )?.innerText ?? null,
+    try:
+
+        phone = (
+            panel.locator(
+                phone_selector
+            )
+            .last
+            .inner_text()
+        )
+
+    except Exception:
+
+        phone = None
 
 
-            website:
-                document.querySelector(
-                    selectors.website
-                )?.href ?? null
+    try:
 
-        })
-        """,
-        {
-            "address": address_selector,
-            "phone": phone_selector,
-            "website": website_selector,
-        },
+        website = (
+            panel.locator(
+                website_selector
+            )
+            .last
+            .get_attribute(
+                "href"
+            )
+        )
+
+    except Exception:
+
+        website = None
+
+
+    data = {
+        "address": address,
+        "phone": phone,
+        "website": website,
+    }
+
+    print(
+        "     Address:",
+        data["address"],
     )
 
+    print(
+        "     Phone:",
+        data["phone"],
+    )
 
+    print(
+        "     Website:",
+        data["website"],
+    )
 
     #
     # Merge Google Maps data.
@@ -166,23 +307,19 @@ def enrich_business(
 
         business.address = data["address"]
 
-
-
     if data["phone"]:
 
         business.phone = data["phone"]
-
-
 
     if data["website"]:
 
         business.website = data["website"]
 
-
+    print(
+        "  ✓ Enriquecimiento completado."
+    )
 
     return business
-
-
 
 
 def parse_business_summary(
@@ -193,8 +330,6 @@ def parse_business_summary(
     address = None
     phone = None
 
-
-
     for block_index in range(
         info_blocks.count()
     ):
@@ -202,8 +337,6 @@ def parse_business_summary(
         text = info_blocks.nth(
             block_index
         ).inner_text()
-
-
 
         parts = [
 
@@ -215,15 +348,11 @@ def parse_business_summary(
 
         ]
 
-
-
         for item in parts:
 
             if is_phone(item):
 
                 phone = item
-
-
 
             elif item and category is None:
 
@@ -231,12 +360,9 @@ def parse_business_summary(
 
                     category = item
 
-
-
         if len(parts) >= 2:
 
             possible_address = parts[-1]
-
 
             if (
 
@@ -249,7 +375,5 @@ def parse_business_summary(
             ):
 
                 address = possible_address
-
-
 
     return category, address, phone
