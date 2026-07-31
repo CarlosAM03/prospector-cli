@@ -1,5 +1,4 @@
 import re
-
 from playwright.sync_api import TimeoutError
 
 from models.business import Business
@@ -25,7 +24,50 @@ def extract_place_id(
         return match.group(1)
 
     return None
+def read_text(
+    panel,
+    selector,
+):
 
+    try:
+
+        return (
+            panel.locator(
+                selector
+            )
+            .last
+            .inner_text(
+                timeout=1000,
+            )
+            .strip()
+        )
+
+    except Exception:
+
+        return None
+
+
+def read_href(
+    panel,
+    selector,
+):
+
+    try:
+
+        return (
+            panel.locator(
+                selector
+            )
+            .last
+            .get_attribute(
+                "href",
+                timeout=1000,
+            )
+        )
+
+    except Exception:
+
+        return None
 
 def enrich_business(
     page,
@@ -37,7 +79,7 @@ def enrich_business(
     print(
         f"\n>>> Enriqueciendo: {business.name}"
     )
-
+    
     place_id = extract_place_id(
         href
     )
@@ -53,6 +95,9 @@ def enrich_business(
     selector = create_selector_engine(
         page
     )
+    name_selector = selector.selectors(
+        "business_name"
+    )[0]
 
     lazycharge = LazyChargeEngine(
         page=page,
@@ -62,7 +107,10 @@ def enrich_business(
     #
     # Open detail panel.
     #
-
+    previous_name = read_text(
+        page,
+        name_selector,
+    )
     page.evaluate(
         """
         href => {
@@ -85,7 +133,30 @@ def enrich_business(
     print(
         "  ✓ Click realizado."
     )
+    if previous_name:
 
+        try:
+
+            page.wait_for_function(
+                """
+                previous => {
+
+                    const title = document.querySelector("h1");
+
+                    return (
+                        title &&
+                        title.innerText.trim() !== previous
+                    );
+
+                }
+                """,
+                arg=previous_name,
+                timeout=2000,
+            )
+
+        except TimeoutError:
+
+            pass
     #
     # Synchronize detail panel.
     #
@@ -139,7 +210,30 @@ def enrich_business(
         print(
             "  ✓ place_id validado."
         )
+        if identity:
 
+            try:
+
+                page.wait_for_function(
+                    """
+                    expected => {
+
+                        const title = document.querySelector("h1");
+
+                        return (
+                            title &&
+                            title.innerText.trim() === expected
+                        );
+
+                    }
+                    """,
+                    arg=identity["name"],
+                    timeout=2000,
+                )
+
+            except TimeoutError:
+
+                pass
     except TimeoutError:
 
         print(
@@ -158,24 +252,10 @@ def enrich_business(
             "  → Validando nombre..."
         )
 
-        name_selector = selector.selectors(
-            "business_name"
-        )[0]
-
-        try:
-
-            detail_name = (
-                panel.locator(
-                    name_selector
-                )
-                .last
-                .inner_text()
-                .strip()
-            )
-
-        except Exception:
-
-            detail_name = None
+        detail_name = read_text(
+            panel,
+            name_selector,
+        )
 
         print(
             "     Esperado:",
@@ -195,7 +275,7 @@ def enrich_business(
 
             return business
 
-        if detail_name.strip() != identity["name"].strip():
+        if detail_name != identity["name"].strip():
 
             print(
                 "  [EXIT] Nombre diferente."
@@ -231,52 +311,20 @@ def enrich_business(
     # Extract detail data.
     #
 
-    try:
+    address = read_text(
+        panel,
+        address_selector,
+    )
 
-        address = (
-            panel.locator(
-                address_selector
-            )
-            .last
-            .inner_text()
-        )
+    phone = read_text(
+        panel,
+        phone_selector,
+    )
 
-    except Exception:
-
-        address = None
-
-
-    try:
-
-        phone = (
-            panel.locator(
-                phone_selector
-            )
-            .last
-            .inner_text()
-        )
-
-    except Exception:
-
-        phone = None
-
-
-    try:
-
-        website = (
-            panel.locator(
-                website_selector
-            )
-            .last
-            .get_attribute(
-                "href"
-            )
-        )
-
-    except Exception:
-
-        website = None
-
+    website = read_href(
+        panel,
+        website_selector,
+    )
 
     data = {
         "address": address,
