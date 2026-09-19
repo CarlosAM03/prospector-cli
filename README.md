@@ -1,183 +1,128 @@
 # Prospector CLI
 
-Prospector CLI is an open-source command-line engine for extracting structured business data from publicly available sources.
+Prospector CLI is an independent open-source Python CLI for extracting structured business information from public sources. The current implementation is CLI-first and centered on a Google Maps pipeline.
 
-The project transforms raw public information into reusable datasets that can be consumed by CRM, ERP, marketing automation or custom business platforms.
+The project is not a SaaS, web API, CRM, ERP, DATRA backend or distributed platform. Other applications may consume its results, but those applications are outside this repository.
 
----
-
-*Public data in. Structured business data out.*
-
----
-
-## Philosophy
-
-Prospector CLI is intentionally designed as a lightweight extraction engine.
-
-Its responsibility is to transform public information into structured data through a modular and reusable pipeline.
-
-The engine focuses exclusively on:
-
-* Searching public data sources.
-* Extracting business information.
-* Normalizing collected data.
-* Validating extracted information.
-* Exporting structured results.
-
-Business logic such as CRM management, customer administration, marketing workflows, dashboards and analytics belongs to external applications that consume this engine.
-
----
-
-## Design Principles
-
-The engine is built around a small set of architectural principles that remain constant regardless of the supported data source.
-
-* Single responsibility for every module.
-* Configuration over hardcoded behavior.
-* Source-independent architecture.
-* Normalized internal data model.
-* Scraper-specific internal pipelines.
-* Incremental enrichment of business data.
-* Reusable extraction components.
-
-Each data source may require a different extraction strategy, but all sources must produce a consistent internal representation.
-
----
-
-## Technology Stack
-
-* Python 3.11
-* Playwright
-* Pandas
-* OpenPyXL
-
----
-
-## Project Structure
+## Current behavior
 
 ```text
-prospector-cli/
-
-├── configs/
-│
-├── docs/
-│   ├── architecture.md
-│   ├── contributing.md
-│   ├── roadmap.md
-│   └── scripting-pipeline.md
-│
-├── src/
-│   ├── config/
-│   ├── exporters/
-│   ├── models/
-│   ├── scraper/
-│   ├── utils/
-│   └── main.py
-│
-├── .gitignore
-├── README.md
-└── requirements.txt
+CLI input
+  -> SearchQuery
+  -> Google Maps navigation and virtual/infinite feed loading
+  -> summary extraction into Business objects
+  -> detail-panel enrichment
+  -> optional Website Engine enrichment
+  -> SearchResult
+  -> CSV or XLSX export through ExportService
 ```
 
----
+The current programmatic boundary is:
 
-## Getting Started
-
-Clone the repository:
-
-```bash
-git clone <repository-url>
-cd prospector-cli
+```python
+search_businesses(query: SearchQuery, limit: int = 50) -> SearchResult
 ```
 
-Create a virtual environment:
+This is transitional, not the approved stable `v1.0.0` Engine contract. The interactive CLI currently invokes the pipeline with `limit=500`. That limit bounds Businesses processed/returned; it does not guarantee that Google Maps loads no additional DOM nodes.
 
-```bash
-python -m venv venv
+Businesses may remain partially enriched when detail-panel or website inspection cannot provide every field. Website inspection currently covers basic status/final URL, title, description, language and email extraction. Contact/about detection and effective `content_type` output remain incomplete.
+
+## Project purpose and design principles
+
+The project is intended to turn public-source information into reusable structured prospect data while keeping business workflows outside the repository. Its architectural direction is based on small responsibilities, source-specific pipelines, incremental enrichment, reusable infrastructure and clear boundaries between extraction, results and export.
+
+Some of that direction is already represented by current modules; some is the target toward `v1.0.0`. Formal normalization, validation, deduplication and configuration profiles must not be inferred from this design description as currently implemented.
+
+## Installation
+
+Create and activate a virtual environment using a Python version available in your environment:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+python -m playwright install chromium
 ```
 
-Activate the environment:
+The audit/regression checkpoint observed compatibility with Python 3.13.4, pytest 9.1.1 and Playwright 1.61.0/Chromium. This observation does not define the project's official Python compatibility policy.
 
-### Windows
+## Run the CLI
 
-```bash
-venv\Scripts\activate
-```
-
-### Linux / macOS
-
-```bash
-source venv/bin/activate
-```
-
-Install dependencies:
-
-```bash
-pip install -r requirements.txt
-```
-
-Install Playwright browsers:
-
-```bash
-playwright install chromium
-```
-
-Run the application:
-
-```bash
+```powershell
 python src/main.py
 ```
 
----
+The CLI asks for keyword and location, runs the current Google Maps pipeline and offers CSV/XLSX export. It opens a visible Chromium browser under the current implementation.
 
-## Documentation
+## Exports
 
-Technical documentation is available in the `docs/` directory.
-
-Available documentation:
-
-* Architecture overview.
-* Internal execution pipeline.
-* Project roadmap.
-* Contribution guidelines.
-
----
-
-## Project Scope
-
-Prospector CLI is responsible only for obtaining structured business information from public sources.
-
-The following responsibilities are intentionally outside the scope of this repository:
-
-* CRM systems.
-* ERP systems.
-* Customer management.
-* User management.
-* Marketing automation.
-* Sales workflows.
-* Dashboards.
-* Analytics.
-* Business process management.
-* Data persistence.
-
-These responsibilities belong to external platforms built on top of this engine.
-
----
-
-## Contributing
-
-Contributions are welcome.
-
-Before submitting changes, please review the documentation available in:
+`ExportService` consumes `SearchResult` directly and is reusable application/export infrastructure. It is outside the extraction core and is not CLI-only. Current CSV/XLSX columns are:
 
 ```text
-docs/contributing.md
+Name, Category, Address, Phone, Email, Website, Language
 ```
 
-All contributions should follow the project's architectural principles and maintain the modular design of the engine.
+## Tests
 
----
+Install development dependencies separately:
 
-## License
+```powershell
+python -m pip install -r requirements-dev.txt
+```
 
-License information will be added before the first stable public release.
+Run the deterministic and controlled regression baseline:
+
+```powershell
+python -m compileall -q src
+python -m pytest --collect-only -q
+python -m pytest tests\unit -q
+python -m pytest tests\integration -q
+python -m pytest -q
+```
+
+The default suite does not require Internet and does not reach Google Maps. The Website Engine integration test uses localhost and local Chromium. The live Google Maps check is opt-in:
+
+```powershell
+$env:PROSPECTOR_RUN_E2E = "1"
+python -m pytest -m e2e -q
+Remove-Item Env:PROSPECTOR_RUN_E2E
+```
+
+See `tests/README.md` and `docs/contributing.md` for the test policy and contributor checks.
+
+## Architecture direction
+
+The current scraper owns Playwright/browser lifecycle and source-specific extraction. Internal diagnostics still include `print` calls and error handling is heterogeneous.
+
+The approved target is:
+
+```text
+CLI adapter -> ProspectorEngine(config) -> extraction pipeline -> SearchResult
+                                                        |
+                                                        +-> ExportService -> CSV/XLSX
+```
+
+`ProspectorEngine` and `EngineConfig` do not exist yet. Formal normalization, structured errors/issues, multi-input, deduplication and merge are future work. Physical extraction into a separately packaged Engine is a post-v1 possibility, not a prerequisite for `v1.0.0`.
+
+## Project evolution
+
+The current stabilization line builds on earlier work rather than restarting the project. Historical milestones include initial Google Maps navigation and summary extraction, detail-panel enrichment, standardized `SearchResult`/export output, selector infrastructure, Website Engine enrichment, Navigation Engine integration and lazy/dynamic-content synchronization support. These milestones explain why the repository contains reusable engines and source-specific modules; they do not mean every planned abstraction is complete today.
+
+The public route is now:
+
+```text
+previous extraction and reusable-components work
+        -> v0.7.x stability and decoupling
+        -> v0.8.x normalization
+        -> v0.9.x multi-input and deduplication
+        -> v1.0.0 stable extraction-ready release
+        -> post-v1 packaging/consumer possibilities
+```
+
+## Scope
+
+This repository focuses on obtaining structured prospect data from public sources. It does not implement CRM/ERP, customer or user management, marketing automation, sales workflows, dashboards, analytics, persistence, jobs or distributed execution.
+
+## Contributing and license
+
+Read `docs/contributing.md` before contributing. The project license is in `LICENSE`.

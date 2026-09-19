@@ -1,27 +1,11 @@
 # Research Scripts
 
-This directory contains exploratory scripts created to understand the behavior of supported public sources.
+This directory contains exploratory/manual tooling used to investigate browser behavior, Google Maps DOM behavior, extraction strategies and architectural assumptions.
 
-These scripts are intentionally isolated from the production code.
+These scripts are not permanent pytest contracts and may become obsolete after their findings are incorporated into implementation or documentation. Research notes must distinguish observed facts from hypotheses and must not be used to claim a production mechanism unless source code confirms it.
 
-## Google Maps DOM Lifecycle
+Research tooling is not part of the default regression suite and must not introduce a public dependency on Google Maps for ordinary tests.
 
-Purpose
+### Historical Google Maps DOM findings — HISTORICAL
 
-- Verify whether Google Maps replaces or reuses the detail panel.
-- Inspect URL changes after selecting a business.
-- Validate synchronization strategies.
-- Evaluate Playwright interaction methods.
-
-Key findings
-
-- Google Maps behaves as a Single Page Application.
-- The detail panel persists between businesses.
-- Only the panel content changes.
-- Synchronization by state change is faster than waiting for navigation.
-- JavaScript click is sufficient for opening businesses.
-- Business information can be extracted in a single JavaScript evaluation.
-
-Impact
-
-These findings led to the Phase 2 redesign implemented in v0.3.0.
+Earlier research investigated SPA detail-panel reuse, URL changes, synchronization by state and Playwright interaction methods. Those findings informed later Navigation Engine, LazyCharge and detail-panel work. They explain architectural evolution, but a historical observation such as a single JavaScript extraction pass must not be treated as the current implementation contract unless `src/` confirms it.

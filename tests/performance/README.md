@@ -1,10 +1,5 @@
 # Performance Tests
 
-This directory contains benchmarks and performance measurements.
+This directory is reserved for benchmarks and performance measurements. It is not currently part of the default regression suite.
 
-The purpose is to evaluate:
-
-- Execution time.
-- Memory usage.
-- Scalability.
-- Scraping throughput.
+Potential measurements include execution time, memory usage, scalability and scraping throughput. Performance work belongs to a later phase; fixed waits, scroll distance, stability values and current execution-time formatting are not public contracts merely because they can be measured.

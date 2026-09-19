@@ -1,167 +1,59 @@
 # Roadmap
 
-This roadmap describes the planned evolution of Prospector CLI.
+This roadmap distinguishes historical milestones, current capabilities and future targets. The remaining stabilization work is intentionally described at the `v0.7.x` line level; patch-version decomposition is deferred.
 
-The project follows an incremental development strategy focused on delivering a functional extraction engine as quickly as possible while preserving a modular architecture.
+## Historical milestones — HISTORICAL
 
-The first stable release (v1.0.0) represents the technical proof of concept for the engine and serves as the foundation for future integrations with external platforms.
+The project history includes bootstrap, Google Maps navigation, business/detail extraction, export, selector infrastructure and Website Engine work. Historical descriptions do not override the current source. References to normalization, single-evaluation extraction, automatic pagination or configuration profiles must not be read as proof that those capabilities are complete now.
 
----
+### Historical evolution
 
-# v0.1.0 — Project Bootstrap
+The earlier roadmap and commits record this sequence of development:
 
-**Status:** Completed
+- `v0.1.x`: repository bootstrap, Playwright integration, initial Google Maps navigation, interactive queries and browser validation.
+- `v0.2.x`: initial result-list fields and the first internal business models.
+- `v0.3.x`: detail-panel extraction, incremental enrichment and website discovery, followed by performance/synchronization work.
+- `v0.4.x`: `SearchResult`, exporter interfaces, file naming and CSV/XLSX export integration.
+- `v0.5.x`: selector profiles, registry, selector resolution and candidate-election/fallback infrastructure.
+- `v0.6.x`: Website crawler/parser/extractor integration as a separate enrichment phase.
+- Early `v0.7.0`: Navigation Engine integration and lazy/dynamic-content support for the Google Maps pipeline.
 
-## Objectives
+These are historical milestones and architectural context. Some old objective wording, such as “normalization” or “pagination”, has been reclassified by the current baseline because the present implementation and approved plan use more precise boundaries.
 
-- [x] Establish the project structure.
-- [x] Configure the Python development environment.
-- [x] Integrate Playwright.
-- [x] Implement Google Maps navigation.
-- [x] Support interactive search queries.
-- [x] Validate browser automation.
+## Current checkpoint — CURRENT
 
----
+Phase 0 — baseline audit and Phase 1 — regression safety are complete. The permanent suite has deterministic unit tests, controlled integration tests and an opt-in live Google Maps E2E check. The default suite does not require Internet or reach Google Maps.
 
-# v0.2.0 — Initial Data Extraction
+The application remains a CLI-first Google Maps pipeline with Website Engine enrichment and CSV/XLSX export. `ProspectorEngine` and `EngineConfig` do not yet exist.
 
-**Status:** Completed
+## v0.7.x — TARGET_V0_7_X
 
-## Objectives
+The stabilization line covers:
 
-- [x] Extract business names.
-- [x] Extract business categories.
-- [x] Extract business addresses.
-- [x] Extract business phone numbers.
-- [x] Create internal business models.
-- [x] Normalize raw extracted data into structured business entities.
+1. Google Maps feed readiness, virtual/infinite scrolling, detail identity and partial prospect behavior;
+2. extraction of the initial public/internal configuration boundary;
+3. explicit Playwright/browser lifecycle ownership and cleanup;
+4. separation of engine diagnostics from CLI output;
+5. recoverable/fatal error semantics and structured partial-result evidence;
+6. an internal `ProspectorEngine(config).search(query)` facade;
+7. migration of the CLI to consume that facade.
 
----
+The exact patch-version decomposition is deferred and is not defined here.
 
-# v0.3.0 — Business Detail Extraction
+## v0.8.x — TARGET_V0_8
 
-**Status:** Completed
+One primary concern: formal deterministic normalization after extraction/enrichment. Deduplication is not part of this boundary.
 
-## Objectives
+## v0.9.x — TARGET_V0_9
 
-- [x] Open the business detail panel.
-- [x] Complete missing business information.
-- [x] Improve address reliability.
-- [x] Improve phone number reliability.
-- [x] Extract business websites.
-- [x] Handle missing information gracefully.
-- [x] Replace locator-based navigation with href-based navigation.
-- [x] Reduce unnecessary synchronization time.
-- [x] Optimize panel extraction using a single JavaScript evaluation.
+Multiple SearchQuery inputs plus deduplication, merge, batch-result semantics and measured execution/performance decisions. Browser strategy, identity confidence, concurrency and query-level partial outcomes remain future design work.
 
----
+## v1.0.0 — TARGET_V1_0
 
-# v0.4.0 — Export Engine
+The first complete and stable release should provide a stable CLI, stable Engine contract, documented current behavior, regression safety, appropriate error/configuration semantics and extraction-ready internal architecture. Physical extraction into a separate package is not required before `v1.0.0`.
 
-**Status:** Completed
+## Post-v1 — POST_V1
 
-## Objectives
+Possible later work includes physical Prospector Engine packaging, additional source adapters/exporters, plugins and distributed or parallel execution. These are future extensions, not current capabilities.
 
-[x] Excel export.
-[x] CSV export.
-[x] Standardized output structure.
-[x] Export pipeline.
-[x] Output file naming strategy.
-
----
-
-# v0.5.0 — Selector Infrastructure
-
-Status: Completed
-
-## Objectives
-
-[x] Introduce Selector Engine.
-[x] Introduce Elector Engine.
-[x] Implement selector registry.
-[x] Support semantic selector profiles.
-[x] Decouple scraper logic from DOM selectors.
-[x] Centralize selector resolution.
-[x] Support selector fallback strategies.
-[x] Prepare synchronization engine
----
-
-# v0.6.0 — Website Inspection
-
-**Status:** Completed
-
-## Objectives
-
-[x] Visit the business website.
-[x] Find business email addresses.
-[x] Detect the primary website language.
-[x] Detect multilingual websites when possible.
-[x] Validate website availability.
-[x] Enrich business entities with website metadata.
-
----
-
-# v0.7.0 — Search Automation
-
-**Status:** In progress
-
-## Objectives
-
-- Automatic scrolling.
-- Configurable extraction limits.
-- Stable execution flow.
-- Automatic pagination handling.
-- Automatic lazy-loading support.
-
----
-
-# v0.8.0 — Configuration Profiles
-
-**Status:** Planned
-
-## Objectives
-
-- Configuration file support.
-- Default execution profile.
-- Custom user profiles.
-- CLI profile selection.
-- Interactive input fallback.
-
----
-
-# v1.0.0 — MVP Release
-
-## Goal
-
-Deliver a complete command-line prospecting engine capable of producing structured business prospect lists from Google Maps.
-
-### Functional Scope
-
-- Interactive CLI.
-- Configuration profiles.
-- Google Maps scraper.
-- Structured business extraction.
-- Website inspection.
-- Business normalization.
-- Excel export.
-- Configurable execution.
-- Performance metrics.
-- Extensible scraper architecture.
-
-This release represents the first production-ready proof of concept for validating the engine before its integration into higher-level commercial platforms.
-
----
-
-# Beyond v1.0.0
-
-Future development will focus on extending the engine without changing its architectural principles.
-
-Potential areas include:
-
-- Additional public data sources.
-- Additional export formats.
-- Plugin-based scrapers.
-- Improved normalization strategies.
-- Parallel execution.
-- Performance benchmarking.
-- Distributed execution.
+Prospector CLI remains an independent open-source CLI project, not a SaaS, API, or distributed service.

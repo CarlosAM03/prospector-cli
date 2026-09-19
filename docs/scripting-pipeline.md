@@ -1,194 +1,87 @@
 # Scripting Pipeline
 
-## Purpose
+This page documents the flow implemented today. Future stages are listed separately and are not implied to be present.
 
-This document describes the execution flow of Prospector CLI from user input to structured output.
+The pipeline is intentionally described at two levels: reusable boundaries represent the design scope, while the current Google Maps path identifies the consumer that exists today. A future source may require a different internal sequence and may not need every current Google Maps synchronization component.
 
-The pipeline is designed so every stage has a single responsibility.
+## Current flow — CURRENT
 
----
-
-# Overview
-
-```
-User
- │
- ▼
-CLI
- │
- ▼
-Configuration
- │
- ▼
-Query Builder
- │
- ▼
-Scraper
- │
- ▼
-Raw Data
- │
- ▼
-Normalization Engine
- │
- ▼
-Validation Engine
- │
- ▼
-Deduplication Engine
- │
- ▼
-Exporter
- │
- ▼
-Output
+```text
+Interactive CLI input
+        |
+        v
+SearchQuery
+        |
+        v
+search_businesses(query, limit)
+        |
+        v
+Playwright / Chromium
+        |
+        v
+NavigationEngine -> GoogleMapsNavigation
+        |
+        v
+Google Maps virtual/infinite feed
+        |
+        v
+Summary extraction -> ordered Business[]
+        |
+        v
+Detail panel identity validation and enrichment
+        |
+        v
+Website Engine enrichment when available
+        |
+        v
+SearchResult
+        |
+        +--> CLI presentation
+        |
+        +--> ExportService -> CSV/XLSX
 ```
 
----
+### Input and navigation
 
-# Pipeline Stages
+The current CLI asks for keyword and location and constructs a Google Maps `SearchQuery`. The interactive path calls the scraper with `limit=500`; the programmatic boundary accepts a query and limit. The scraper starts Playwright/Chromium and uses `NavigationEngine`/`GoogleMapsNavigation` to reach results.
 
-## 1. Input
+### Feed and extraction
 
-The execution starts from one of three sources:
+Google Maps results are loaded through a virtual/infinite feed with source-specific synchronization, scrolling and fixed timing values. The result-list stage parses summary information into ordered `Business` objects and retains identity information for the detail pass. `limit` bounds Businesses processed/returned, not DOM nodes loaded.
 
-- Interactive CLI
-- Configuration profile
-- Command-line arguments
+### Enrichment and result
 
-The engine builds a unified search request regardless of the origin.
+The detail stage validates identity before applying available data. A detail failure can leave a partial Business. Website Engine may add basic status/final URL, title, description, language and email data. Website failure is recoverable at prospect level under the approved direction, but no structured issue schema exists yet.
 
----
+`SearchResult` preserves query, ordered Businesses, `total_found` and execution time. Export is a subsequent operation through reusable `ExportService`.
 
-## 2. Configuration
+## Not current
 
-Configuration files define reusable execution profiles.
+The source does not implement general configuration profiles, a Query Builder, formal normalization, general validation, deduplication, multi-input, structured logging, structured error/issues, `ProspectorEngine` or `EngineConfig`.
 
-Example responsibilities:
+## Approved target — TARGET_V0_7_X / TARGET_V1_0
 
-- Search query
-- Maximum results
-- Export format
-- Output location
-
-Interactive input always overrides missing values.
-
----
-
-## 3. Query Builder
-
-Transforms user input into a normalized internal query.
-
-Example:
-
-Input:
-
-```
-maquila tijuana
+```text
+CLI adapter / future consumer
+        |
+        v
+ProspectorEngine(config).search(query)
+        |
+        v
+Extraction and enrichment pipeline
+        |
+        v
+SearchResult
+        +--> CLI presentation
+        +--> ExportService -> CSV/XLSX
 ```
 
-Normalized query:
+Normalization belongs to `v0.8.x`; multiple inputs, deduplication and merge belong to `v0.9.x`. A future API is a possible consumer, not a current stage.
 
-```
-SearchQuery(
-    source="google_maps",
-    location="Tijuana",
-    keyword="maquila"
-)
-```
+## Pipeline design principles
 
----
+The project evolved around small stages with explicit inputs and outputs, incremental enrichment and source-specific extraction strategies. Navigation, selector resolution, dynamic-content synchronization, website inspection and export are separated so they can be reused where their behavior applies. Reuse is an architectural opportunity, not evidence that multiple sources currently consume every component.
 
-## 4. Scraper
+## Future evolution — TARGET_V0_7_X / TARGET_V1_0 / POST_V1
 
-Responsible for interacting with a public source.
-
-Responsibilities:
-
-- Navigate
-- Search
-- Scroll
-- Extract
-- Return raw information
-
----
-
-## 5. Normalization
-
-Converts raw information into internal models.
-
-Example:
-
-```
-Business
-
-name
-
-category
-
-address
-
-phone
-
-website
-```
-
----
-
-## 6. Validation
-
-Ensures extracted information is usable.
-
-Examples:
-
-- Required fields
-- Empty values
-- Invalid formats
-
----
-
-## 7. Deduplication
-
-Removes duplicated businesses before export.
-
-The deduplication strategy may evolve over time.
-
----
-
-## 8. Export
-
-Transforms validated information into supported formats.
-
-Examples:
-
-- Excel
-- CSV
-- JSON
-
-Future exporters can be added without modifying previous stages.
-
----
-
-# Design Principles
-
-Every stage should:
-
-- Receive one input.
-- Perform one responsibility.
-- Produce one output.
-
-This keeps the pipeline modular, testable and extensible.
-
----
-
-# Future Evolution
-
-The pipeline has been intentionally designed to support:
-
-- Multiple data sources
-- Parallel execution
-- Configuration profiles
-- Plugin-based scrapers
-- Future API integration
-
-without changing the overall architecture.
+The stabilization line is intended to place the current extraction flow behind `ProspectorEngine(config).search(query)` while keeping CLI presentation and `ExportService` outside the extraction core. `v0.8.x` adds formal normalization; `v0.9.x` adds multi-input, deduplication and merge decisions. Additional source strategies, API consumers and physical Engine packaging remain later possibilities and are not current pipeline stages.

@@ -1,114 +1,79 @@
 # Contributing
 
-Thank you for your interest in contributing to Prospector CLI.
+Prospector CLI is an independent open-source CLI project. Contributions should preserve current user-facing behavior unless a change explicitly belongs to an approved future phase.
 
-The goal of this project is to provide a lightweight, modular and reusable engine for extracting business information from public sources.
+## State vocabulary
 
----
+Use these distinctions when reviewing a change:
 
-## Project Philosophy
+- `CURRENT`: implemented behavior;
+- `TECHNICAL_DEBT`: known implementation detail that should not become a desired contract;
+- `TARGET_V0_7_X`, `TARGET_V0_8`, `TARGET_V0_9`, `TARGET_V1_0`: future scope;
+- `DEFERRED_DESIGN`: approved problem whose exact technical contract is not selected yet.
 
-Before contributing, keep the following principles in mind:
+Do not implement `ProspectorEngine`, `EngineConfig`, normalization, deduplication or structured errors merely because they appear in target documentation.
 
-- Keep components small and focused.
-- Avoid introducing business logic into the engine.
-- Favor reusable modules over source-specific implementations.
-- Prioritize readability over clever code.
+The project favors small focused components, composition over large classes, readable code, reusable modules and source-specific extraction logic. Document non-obvious decisions, especially when a component has a reusable design scope but only one current consumer.
 
----
-
-## Project Structure
+## Repository areas
 
 ```text
-src/
+src/models/                 domain models
+src/engines/                navigation, selector and website components
+src/scraper/google_maps/    source-specific extraction pipeline
+src/exporters/              output writers
+src/services/               reusable services such as ExportService
+src/utils/                  helpers
+src/main.py                 current interactive CLI
 
-├── scraper/
-├── exporters/
-├── models/
-├── utils/
-└── main.py
+tests/unit/                 deterministic tests
+tests/integration/          controlled localhost/export tests
+tests/e2e/                  opt-in external checks
+tests/research/             exploratory tooling
+tests/performance/          benchmark area
 ```
 
-Each directory has a single responsibility.
+`ExportService` consumes `SearchResult` and is reusable export infrastructure, not CLI-only and not part of extraction core.
 
----
+## Validation
 
-## Branch Strategy
+```powershell
+python -m pip install -r requirements.txt
+python -m pip install -r requirements-dev.txt
+python -m playwright install chromium
 
-Create a new branch for every feature or fix.
-
-Examples:
-
-```text
-feature/google-maps-parser
-
-feature/excel-export
-
-fix/google-selectors
-
-docs/update-roadmap
+python -m compileall -q src
+python -m pytest --collect-only -q
+python -m pytest tests\unit -q
+python -m pytest tests\integration -q
+python -m pytest -q
 ```
 
----
+The default suite must not require Internet or reach Google Maps. The controlled Website Engine test uses localhost and local Chromium.
 
-## Commit Convention
+The live external check is opt-in:
 
-The project follows Conventional Commits.
-
-Examples:
-
-```text
-feat: implement Google Maps search
-
-feat: export businesses to Excel
-
-fix: update Playwright selectors
-
-refactor: simplify scraper pipeline
-
-docs: improve architecture documentation
+```powershell
+$env:PROSPECTOR_RUN_E2E = "1"
+python -m pytest -m e2e -q
+Remove-Item Env:PROSPECTOR_RUN_E2E
 ```
 
----
+Its result is evaluated separately because Google Maps can vary by network, DOM and navigation timing.
 
-## Pull Requests
+## Guidelines
 
-Before submitting a Pull Request:
+- Keep changes focused and protect intentional contracts with semantic tests.
+- Do not freeze fixed waits, selectors, print output, timestamps or other known debt.
+- Keep source-specific behavior in the source pipeline.
+- Keep CLI presentation separate from reusable extraction and export services.
+- Do not introduce private consumer/product context into public documentation.
+- Include Python version, OS, command, expected behavior and observed behavior when reporting failures.
 
-- Keep changes focused on a single purpose.
-- Update documentation when necessary.
-- Verify that existing functionality is not affected.
-- Follow the project's architecture and philosophy.
+## Git workflow
 
----
+Use a branch for implementation work and a focused commit for each coherent change. Before a checkpoint, inspect `git status --short`, `git diff --check` and staged/unstaged file lists. Do not stage or commit unrelated files.
 
-## Code Style
+## Pull requests and issue reports
 
-General guidelines:
-
-- Use descriptive names.
-- Keep functions short.
-- Avoid duplicated code.
-- Prefer composition over large classes.
-- Document non-obvious decisions.
-
----
-
-## Reporting Issues
-
-When reporting bugs, include:
-
-- Python version
-- Operating system
-- Steps to reproduce
-- Expected behavior
-- Actual behavior
-- Relevant logs or screenshots when available
-
----
-
-## Thank You
-
-Every contribution helps improve the project.
-
-Whether it is code, documentation, bug reports or suggestions, your participation is appreciated.
+Keep pull requests focused on one purpose, explain the observable behavior affected and update the relevant owning documentation when a contract or phase boundary changes. For bugs, include Python version, operating system, command, reproduction steps, expected behavior, actual behavior and relevant logs or screenshots. External Google Maps failures should include enough context to distinguish network/DOM variability from deterministic regressions.

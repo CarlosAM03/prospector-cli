@@ -30,3 +30,4 @@ maps_debug.html
 *.md
 *.csv
 *.xlsx
+temp/
