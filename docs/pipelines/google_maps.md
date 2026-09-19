@@ -4,6 +4,10 @@ This page documents the current Google Maps-specific pipeline and its known boun
 
 The pipeline was introduced as a source-specific multi-phase workflow: navigation, dynamic result preparation, identity registration, detail enrichment and website inspection. That separation explains the current module boundaries and remains useful design rationale even where individual synchronization techniques are still technical debt.
 
+## Design Principles
+
+The Google Maps pipeline applies the broader project principles through a source-specific strategy: separate phases, incremental enrichment, retained identity between passes and delegation to reusable infrastructure where applicable. These principles describe why the modules are separated; they do not require every future source to use Playwright, DOM selectors, SPA synchronization or `LazyChargeEngine`.
+
 ## Current pipeline — CURRENT
 
 ```text
@@ -64,3 +68,7 @@ Live execution is externally variable. The baseline observed successful runs as 
 ## Target — TARGET_V0_7_X / TARGET_V1_0
 
 The stabilization line aims to make this source pipeline a consumer of reusable runtime, configuration and error boundaries behind `ProspectorEngine`. It does not require formal page pagination or physical Engine extraction before `v1.0.0`.
+
+## Relationship with the global architecture
+
+Google Maps is the currently implemented source strategy inside the broader project. Its browser/feed/detail phases are source-specific. A future source could use traditional HTML, another browser-driven application, an API or another public interface and could therefore require a substantially different pipeline while still producing the shared domain/result boundary. `WebsiteEngine`, selector infrastructure, navigation boundaries and export infrastructure may be reused when their behavior applies; they are not mandatory steps for every future source.

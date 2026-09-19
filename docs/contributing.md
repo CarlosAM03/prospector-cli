@@ -13,6 +13,10 @@ Use these distinctions when reviewing a change:
 
 Do not implement `ProspectorEngine`, `EngineConfig`, normalization, deduplication or structured errors merely because they appear in target documentation.
 
+## Project Philosophy
+
+Contributions should help keep Prospector CLI independent, readable, modular and useful as an open-source extraction project. Code, documentation, bug reports, tests and design discussion are all valuable contributions. Favor small focused components, reusable infrastructure where it genuinely applies and source-specific pipelines where the target source requires specialized behavior.
+
 The project favors small focused components, composition over large classes, readable code, reusable modules and source-specific extraction logic. Document non-obvious decisions, especially when a component has a reusable design scope but only one current consumer.
 
 ## Repository areas

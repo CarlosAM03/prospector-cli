@@ -27,9 +27,22 @@ This is transitional, not the approved stable `v1.0.0` Engine contract. The inte
 
 Businesses may remain partially enriched when detail-panel or website inspection cannot provide every field. Website inspection currently covers basic status/final URL, title, description, language and email extraction. Contact/about detection and effective `content_type` output remain incomplete.
 
-## Project purpose and design principles
+## Philosophy
 
-The project is intended to turn public-source information into reusable structured prospect data while keeping business workflows outside the repository. Its architectural direction is based on small responsibilities, source-specific pipelines, incremental enrichment, reusable infrastructure and clear boundaries between extraction, results and export.
+Prospector CLI turns public-source information into reusable structured prospect data while keeping CRM, sales and other business workflows outside the repository. The project favors a lightweight, readable and modular extraction system that can evolve without becoming a private application platform.
+
+## Design Principles
+
+The project is guided by:
+
+- single responsibility and simplicity;
+- modular, readable components;
+- reusable extraction infrastructure;
+- source-specific extraction pipelines;
+- incremental enrichment of domain objects;
+- clear separation between extraction, presentation and export;
+- extensibility for future source strategies;
+- configuration over hardcoded execution behavior as the architecture evolves.
 
 Some of that direction is already represented by current modules; some is the target toward `v1.0.0`. Formal normalization, validation, deduplication and configuration profiles must not be inferred from this design description as currently implemented.
 

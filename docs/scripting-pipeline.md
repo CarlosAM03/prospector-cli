@@ -78,6 +78,22 @@ SearchResult
 
 Normalization belongs to `v0.8.x`; multiple inputs, deduplication and merge belong to `v0.9.x`. A future API is a possible consumer, not a current stage.
 
+## Architectural Pipeline Model
+
+The broader project model can be understood as:
+
+```text
+input
+  -> acquisition / source extraction
+  -> incremental enrichment
+  -> SearchResult boundary
+  -> normalization [v0.8.x]
+  -> multi-input / deduplication [v0.9.x]
+  -> consumers and export
+```
+
+This model explains the intended evolution without claiming that normalization, multi-input or deduplication are current stages. A source may use a browser, traditional HTML, an API or another public acquisition strategy; the shared result/domain boundary is the architectural constant, not a requirement to reuse the Google Maps implementation.
+
 ## Pipeline design principles
 
 The project evolved around small stages with explicit inputs and outputs, incremental enrichment and source-specific extraction strategies. Navigation, selector resolution, dynamic-content synchronization, website inspection and export are separated so they can be reused where their behavior applies. Reuse is an architectural opportunity, not evidence that multiple sources currently consume every component.

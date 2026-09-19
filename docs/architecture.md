@@ -2,11 +2,45 @@
 
 This document separates the architecture implemented today from the approved future direction. Future components are not available APIs.
 
-## Architectural philosophy
+## Architectural Philosophy
 
 The repository evolved toward an engine-based organization so source-specific extraction can use reusable navigation, selector, synchronization, website and export components. The design goal is not to claim that every future source or consumer already exists; it is to keep responsibilities explicit so additional strategies can be introduced without coupling them to the CLI.
 
 The governing principles are simplicity, single responsibility, reusability, source-specific pipelines, incremental enrichment, and configuration over hardcoded behavior where configuration is actually available. A reusable design scope and a current consumer are different facts: one current consumer does not make an abstraction source-exclusive, and a reusable abstraction does not prove that multiple sources already use it.
+
+## Architectural Principles
+
+- Reusable behavior should exist in one appropriate shared place rather than being duplicated across source pipelines.
+- Engines coordinate reusable execution behavior or infrastructure.
+- Utilities provide focused helper behavior and should remain stateless where practical.
+- A scraper/source pipeline owns behavior specific to one public source or acquisition strategy.
+- Reusable infrastructure should not depend on a concrete scraper; source-specific code may depend on reusable infrastructure when that infrastructure applies.
+- Extraction, presentation and export remain separate concerns.
+
+This is architectural intent, not a claim that every target boundary has already been implemented.
+
+## Dependency Principles
+
+The intended dependency direction is:
+
+```text
+consumer / CLI
+        |
+        v
+reusable boundary and domain models
+        |
+        v
+source-specific pipeline
+        |
+        v
+external browser, network or parsing libraries
+```
+
+The current CLI still calls the concrete Google Maps boundary directly. The dependency model is therefore a direction for v0.7.x and v1.0.0, not a description of a completed `ProspectorEngine`.
+
+### Engine, utility and scraper
+
+An **Engine** coordinates reusable execution behavior or infrastructure, such as navigation, selector resolution, dynamic-content synchronization or website inspection. A **utility** provides a focused helper, such as parsing or file naming. A **scraper/source pipeline** implements the extraction workflow specific to a source or access strategy. One current consumer is sufficient to justify reusable design scope, but reuse must not be claimed as multiple-source usage without evidence.
 
 ## Current architecture — CURRENT
 
