@@ -1,6 +1,8 @@
+"""Current three-pass Google Maps extraction entrypoint."""
+
 import time
 
-from playwright.sync_api import sync_playwright
+from engines.browser_runtime import BrowserRuntime
 
 from models.business import Business
 from models.search_query import SearchQuery
@@ -12,122 +14,53 @@ from .search import create_search_page
 from .website_enrichment import enrich_websites
 
 
-def search_businesses(
+def search_businesses(query: SearchQuery, limit: int = 50) -> SearchResult:
+    """Transitional boundary with its historical defaults and inputs."""
+    return _run_google_maps(query, limit, headless=False, website_enrichment=True)
+
+
+def _run_google_maps(
     query: SearchQuery,
-    limit: int = 50,
+    limit: int,
+    *,
+    headless: bool,
+    website_enrichment: bool,
+    issue_collector=None,
 ) -> SearchResult:
-    """
-    Execute the complete Google Maps scraping pipeline.
-
-    Pipeline
-    --------
-
-    Phase 1
-        Extract search results.
-
-    Phase 2
-        Enrich businesses using the Google Maps detail panel.
-
-    Phase 3
-        Inspect business websites.
-
-    Returns
-    -------
-    SearchResult
-    """
-
+    """Single source pipeline supplied with execution settings."""
     start_time = time.perf_counter()
-
-
-    with sync_playwright() as playwright:
-
-        browser = playwright.chromium.launch(
-            headless=False,
-        )
-
-
+    with BrowserRuntime(headless=headless) as runtime:
         page = create_search_page(
-            browser,
-            query,
+            runtime.browser, query, page_factory=runtime.new_page
         )
-
-
-        #
-        # Phase 1
-        # Extract search results.
-        #
-
-        results = extract_businesses(
-            page=page,
-            limit=limit,
-        )
-
-
-        #
-        # Phase 2
-        # Enrich businesses using
-        # the Google Maps detail panel.
-        #
-
+        results = extract_businesses(page=page, limit=limit)
         businesses = _enrich_businesses(
-            page=page,
-            results=results,
+            page=page, results=results, issue_collector=issue_collector
         )
-
-
-        #
-        # Phase 3
-        # Inspect business websites.
-        #
-
-        businesses = enrich_websites(
-            browser=browser,
-            businesses=businesses,
-        )
-
-
-        browser.close()
-
-
-
-    execution_time = (
-        time.perf_counter()
-        - start_time
-    )
-
-
+        if website_enrichment:
+            businesses = enrich_websites(
+                browser=runtime.browser, businesses=businesses,
+                issue_collector=issue_collector,
+            )
+        # Runtime owns the Maps page and browser. WebsiteCrawler closes each
+        # short-lived inspection page that it creates.
     return SearchResult(
         query=query,
         businesses=businesses,
-        execution_time=execution_time,
+        execution_time=time.perf_counter() - start_time,
     )
 
 
-
-def _enrich_businesses(
-    page,
-    results: list[dict],
-) -> list[Business]:
-    """
-    Execute Google Maps detail panel enrichment.
-    """
-
+def _enrich_businesses(page, results: list[dict], issue_collector=None) -> list[Business]:
     businesses: list[Business] = []
-
-
     for result in results:
-
-        business = enrich_business(
-            page=page,
-            href=result["href"],
-            business=result["business"],
-            identity=result["identity"],
-        )
-
-
         businesses.append(
-            business
+            enrich_business(
+                page=page,
+                href=result["href"],
+                business=result["business"],
+                identity=result["identity"],
+                issue_collector=issue_collector,
+            )
         )
-
-
     return businesses

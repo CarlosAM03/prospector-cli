@@ -43,7 +43,7 @@ SearchResult
 
 ### Input and navigation
 
-The current CLI asks for keyword and location and constructs a Google Maps `SearchQuery`. The interactive path calls the scraper with `limit=500`; the programmatic boundary accepts a query and limit. The scraper starts Playwright/Chromium and uses `NavigationEngine`/`GoogleMapsNavigation` to reach results.
+The current CLI asks for keyword and location and constructs a Google Maps `SearchQuery`. The interactive path calls the scraper with `limit=500`; the programmatic boundary accepts a query and limit. `BrowserRuntime` starts Playwright/Chromium and provides the Maps page to `NavigationEngine`/`GoogleMapsNavigation`.
 
 ### Feed and extraction
 
@@ -57,7 +57,7 @@ The detail stage validates identity before applying available data. A detail fai
 
 ## Not current
 
-The source does not implement general configuration profiles, a Query Builder, formal normalization, general validation, deduplication, multi-input, structured logging, structured error/issues, `ProspectorEngine` or `EngineConfig`.
+The source does not implement general configuration profiles, a Query Builder, formal normalization, business deduplication or multi-input. `EngineConfig`, internal module logging and a provisional `ProspectorEngine` facade exist, but the approved operational maximum and public structured Error Model remain pending.
 
 ## Approved target — TARGET_V0_7_X / TARGET_V1_0
 

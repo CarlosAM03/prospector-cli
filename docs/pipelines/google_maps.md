@@ -37,11 +37,11 @@ SearchResult
 
 ## Navigation
 
-`NavigationEngine` is the access point used by the search stage. `GoogleMapsNavigation` opens Google Maps, enters the query and waits for the result view. It is source-specific; a generic multi-source navigation contract is not yet implemented.
+`NavigationEngine` is the access point used by the search stage. `GoogleMapsNavigation` receives a page factory from `BrowserRuntime`, opens Google Maps, enters the query and waits for the result view. It is source-specific; a generic multi-source navigation contract is not yet implemented.
 
 ## Result loading
 
-Google Maps behaves as a single-page application with a virtual/infinite feed. The implementation waits for the feed and performs source-specific scrolling/loading work. `LazyChargeEngine` provides helpers, but the current result-list path still owns material scrolling and fixed timing behavior. Full delegation to a reusable synchronization abstraction is a `v0.7.x` target, not current fact.
+Google Maps behaves as a single-page application with a virtual/infinite feed. The navigation path waits for an actionable input and for a visible feed with results; an absent feed or zero links is not treated as a verified empty search because no reliable empty marker has been established. The result-list path owns source-specific feed scrolling. It captures valid candidates before each scroll, tracks first-seen source hrefs in discovery order, and waits within finite attempt/time budgets for a new valid identity. Scroll movement, spinner activity and DOM count changes alone do not reset its stall detection. `LazyChargeEngine` supplies reusable semantic visibility waits, including delayed selector mounting; it does not own Maps scrolling.
 
 `LazyChargeEngine` has a broader design scope than Google Maps alone: it provides semantic waiting, optional-selector handling and DOM-readiness coordination for dynamically rendered, lazy or virtual content. Google Maps is its current consumer because the Maps web application requires this kind of synchronization. Other sources may reuse it when their rendering strategy requires it, but no other source is currently implemented and not every future source would necessarily need it.
 
@@ -49,11 +49,11 @@ This is not formal page pagination. `limit` bounds Businesses processed/returned
 
 ## Summary extraction
 
-The first pass parses available name, category, address, phone and Maps href data into ordered `Business` objects. Identity is retained for later validation. Known parser mojibake is technical debt, not a desired contract.
+The first pass parses available name, category, address, phone and Maps href data into ordered `Business` objects. Invalid early cards do not consume the positive Business limit. Repeated source hrefs are skipped to avoid processing recycled cards, while distinct same-name Businesses remain separate. On a bounded feed stall, already valid Businesses are returned; if none exist and no verified terminal state exists, the search fails as indeterminate. The pipeline does not claim complete source coverage. The legacy `limit <= 0` path still navigates/resolves the feed and returns zero Businesses when that path succeeds. Known parser mojibake is technical debt, not a desired contract.
 
 ## Detail enrichment
 
-The detail stage opens a result, waits for panel state, validates identity and applies available fields. Concrete selectors, waits, URL assumptions and the exact browser extraction technique are implementation details, not architectural contracts. A failed detail operation may leave a valid partial Business in the output; no structured issue object exists yet.
+The detail stage confirms the target click, checks a verifiable target place ID in navigation state, requires a fresh matching panel and compares names using only whitespace trimming/collapse and case-insensitive matching. It stages optional fields and applies nonempty values only after identity is rechecked. If a target cannot be verified, the summary Business remains unchanged. Concrete selectors, waits and URL assumptions remain source-specific implementation details. A private issue collector can record skipped detail enrichment, but no approved public issue schema exists yet.
 
 The identity-first enrichment design exists to avoid associating a later panel state with the wrong result. The first pass retains stable information such as the extracted name and Maps href; subsequent phases validate the expected identity before mutating the same `Business` object. This is a design rationale, not a claim that all current synchronization is deterministic.
 
@@ -63,7 +63,7 @@ When a website is available, the scraper delegates inspection to Website Engine.
 
 ## Runtime variability and debt
 
-Live execution is externally variable. The baseline observed successful runs as well as navigation `TimeoutError` and selector `LookupError` in equivalent small runs. The pipeline also contains fixed waits, source-specific selectors, embedded browser lifecycle, diagnostic prints, heterogeneous exceptions and incomplete contact/about/content type metadata. These findings justify future stability work and should not be hidden or frozen as desired behavior.
+Live execution is externally variable. The earlier baseline observed successful runs as well as navigation `TimeoutError` and selector `LookupError` in equivalent small runs. Controlled offline tests cover state, progress, identity, optional enrichment and runtime cleanup, but there has been no authorized live Maps validation. Browser lifecycle now belongs to `BrowserRuntime` and internal diagnostics use module loggers. Source-specific selectors, heterogeneous public exceptions and incomplete contact/about/content type metadata remain technical debt or future work.
 
 ## Target — TARGET_V0_7_X / TARGET_V1_0
 

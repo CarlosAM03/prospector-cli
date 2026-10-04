@@ -83,16 +83,7 @@ class LazyChargeEngine:
             If the selector never appears.
         """
 
-        locator = self._selector.locator(
-            name
-        )
-
-        locator.wait_for(
-            state="visible",
-            timeout=timeout,
-        )
-
-        return locator
+        return self._selector.wait_visible(name, timeout=timeout)
 
     def optional(
         self,
@@ -231,15 +222,7 @@ class LazyChargeEngine:
         becomes available.
         """
 
-        locator = self._selector.locator(
-            "detail_panel"
-            ).last
-        
-        locator.wait_for(
-            state="visible",
-            timeout=timeout,
-        )
-        return locator
+        return self._selector.wait_visible("detail_panel", timeout=timeout).last
     
     def wait_detail_content(
         self,
@@ -250,28 +233,7 @@ class LazyChargeEngine:
         rendered inside the detail panel.
         """
 
-        self._page.wait_for_function(
-            """
-            () => {
-
-                const h1 = document.querySelector(
-                    "h1.DUwDvf"
-                );
-
-                if (!h1) {
-
-                    return false;
-
-                }
-
-                const text = h1.innerText.trim();
-
-                return (
-                    text.length > 0 &&
-                    text !== "Resultados"
-                );
-
-            }
-            """,
-            timeout=timeout,
-        )
+        panel = self.wait_detail_panel(timeout=timeout)
+        panel.locator(
+            self._selector.selectors("business_name")[0]
+        ).last.wait_for(state="visible", timeout=timeout)

@@ -47,6 +47,7 @@ class NavigationEngine:
             self,
             browser: Browser,
             source: Source,
+            page_factory=None,
         ) -> None:
 
             if source == Source.GOOGLE_MAPS:
@@ -54,6 +55,7 @@ class NavigationEngine:
                 self._navigation = GoogleMapsNavigation(
                     browser=browser,
                     profile="google_maps",
+                    page_factory=page_factory,
                 )
 
             else:

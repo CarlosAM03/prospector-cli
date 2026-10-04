@@ -105,7 +105,7 @@ See `tests/README.md` and `docs/contributing.md` for the test policy and contrib
 
 ## Architecture direction
 
-The current scraper owns Playwright/browser lifecycle and source-specific extraction. Internal diagnostics still include `print` calls and error handling is heterogeneous.
+`BrowserRuntime` now owns Playwright/browser lifecycle for each search. The Google Maps pipeline owns source-specific extraction, while reusable components use module logging for diagnostics. The public error contract remains unsettled.
 
 The approved target is:
 
@@ -115,7 +115,7 @@ CLI adapter -> ProspectorEngine(config) -> extraction pipeline -> SearchResult
                                                         +-> ExportService -> CSV/XLSX
 ```
 
-`ProspectorEngine` and `EngineConfig` do not exist yet. Formal normalization, structured errors/issues, multi-input, deduplication and merge are future work. Physical extraction into a separately packaged Engine is a post-v1 possibility, not a prerequisite for `v1.0.0`.
+`EngineConfig` and a provisional `ProspectorEngine` facade exist. The facade is not the stable programmatic boundary until an operational maximum and public error schema are approved. Formal normalization, public structured issues, multi-input, deduplication and merge remain future work. Physical extraction into a separately packaged Engine is a post-v1 possibility, not a prerequisite for `v1.0.0`.
 
 ## Project evolution
 

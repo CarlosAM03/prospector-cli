@@ -36,7 +36,7 @@ source-specific pipeline
 external browser, network or parsing libraries
 ```
 
-The current CLI still calls the concrete Google Maps boundary directly. The dependency model is therefore a direction for v0.7.x and v1.0.0, not a description of a completed `ProspectorEngine`.
+The current CLI still calls the concrete Google Maps boundary directly. A provisional `ProspectorEngine` facade exists, but its operational maximum and public error semantics are not approved, so the CLI has not migrated to it.
 
 ### Engine, utility and scraper
 
@@ -48,7 +48,7 @@ An **Engine** coordinates reusable execution behavior or infrastructure, such as
 main.py
   -> SearchQuery
   -> search_businesses(query, limit=500)
-       -> Playwright / Chromium
+       -> BrowserRuntime -> Playwright / Chromium
        -> NavigationEngine -> GoogleMapsNavigation
        -> Google Maps virtual/infinite feed loading
        -> summary parser -> ordered Business[]
@@ -68,7 +68,9 @@ The current `search_businesses(query, limit)` function is the observable program
 
 `NavigationEngine` delegates Google Maps navigation to `GoogleMapsNavigation`. Selector registry/elector/selector infrastructure provides lookup and fallback behavior; concrete DOM selectors remain source-specific.
 
-`src/scraper/google_maps/` coordinates feed loading, summary parsing, detail identity validation and website enrichment. It currently owns Playwright/browser/page lifecycle.
+`src/scraper/google_maps/` coordinates feed loading, summary parsing, detail identity validation and website enrichment. `BrowserRuntime` owns Playwright, the browser and Maps pages for each execution. WebsiteCrawler closes its short-lived inspection pages.
+
+`EngineConfig` validates a requested limit, headless mode and optional website enrichment. The separate `engine_max_limit` policy is still unapproved; the provisional facade rejects normal searches until that policy is supplied. An internal issue collector records controlled detail and website failures, but it is not a public `SearchResult` contract.
 
 `src/engines/website/` contains crawling, parsing, extraction, email extraction, language detection and metadata construction. Basic status/final URL, title, description, language and email behavior is covered by controlled tests. Contact/about flags and effective `content_type` output remain incomplete.
 
@@ -90,7 +92,7 @@ Google Maps is the only implemented/supported prospect source today. The abstrac
 
 ## Current technical debt — TECHNICAL_DEBT
 
-The following are not desired architecture: embedded browser lifecycle; distributed defaults; fixed waits, scrolling and stability values; diagnostic prints mixed with CLI output; heterogeneous/broadly caught errors; concrete Google Maps selectors and URL assumptions; incomplete contact/about/content type metadata; and the absence of structured partial-result issues. Normal successful cleanup has been observed, but exceptional cleanup is not structurally guaranteed by a dedicated runtime/finally boundary.
+Remaining technical debt includes the unapproved Engine maximum, a public recoverable/fatal Error Model, CLI migration, source-specific scrolling parameters and selector/URL assumptions, incomplete contact/about/content type metadata, and live Maps validation. Reusable components use module loggers without setting global logging policy; CLI presentation remains in `main.py`.
 
 ## Approved target architecture — TARGET_V0_7_X / TARGET_V1_0
 
@@ -108,7 +110,7 @@ CLI adapter       other Python consumer / future API
                                     CSV      XLSX
 ```
 
-The target means the Engine owns reusable prospecting orchestration; the CLI owns input/presentation; and `ExportService` consumes `SearchResult` without belonging inside extraction core. `ProspectorEngine` and `EngineConfig` are not implemented yet. Initial public configuration candidates are `limit`, `headless` and `website_enrichment`; `output_path` remains outside EngineConfig.
+The target means the Engine owns reusable prospecting orchestration; the CLI owns input/presentation; and `ExportService` consumes `SearchResult` without belonging inside extraction core. `EngineConfig` and a provisional facade now exist. `output_path` remains outside EngineConfig. The facade cannot be treated as a completed public boundary until the Engine maximum and Error Model contract are approved and integrated.
 
 ## Version boundaries
 

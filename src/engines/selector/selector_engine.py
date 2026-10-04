@@ -21,7 +21,9 @@ The Selector Engine never contains scraper logic.
 It only coordinates selector resolution.
 """
 
-from playwright.sync_api import Locator
+import time
+
+from playwright.sync_api import Locator, TimeoutError as PlaywrightTimeoutError
 
 from .elector_engine import ElectorEngine
 from .registry import SelectorRegistry
@@ -82,6 +84,27 @@ class SelectorEngine:
         return self._elector.elect(
             selectors
         )
+
+    def wait_visible(self, name: str, timeout: int = 10000) -> Locator:
+        """Wait for any semantic candidate, even if mounted after the call."""
+        candidates = self.selectors(name)
+        deadline = time.monotonic() + timeout / 1000
+        while True:
+            for candidate in candidates:
+                try:
+                    locator = self._elector.page.locator(candidate)
+                    if locator.count() and locator.first.is_visible():
+                        return locator
+                except Exception:
+                    continue
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise PlaywrightTimeoutError(
+                    f"No visible selector for {name!r} within {timeout} ms"
+                )
+            self._elector.page.wait_for_timeout(
+                min(100, max(1, int(remaining * 1000)))
+            )
 
     def optional(
         self,

@@ -6,11 +6,13 @@ from models.search_query import SearchQuery
 def create_search_page(
     browser,
     query: SearchQuery,
+    page_factory=None,
 ):
 
     navigation = NavigationEngine(
         browser=browser,
         source=query.source,
+        page_factory=page_factory,
     )
 
     page = navigation.open()

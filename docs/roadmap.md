@@ -22,9 +22,9 @@ These are historical milestones and architectural context. Some old objective wo
 
 ## Current checkpoint — CURRENT
 
-Phase 0 — baseline audit and Phase 1 — regression safety are complete. The permanent suite has deterministic unit tests, controlled integration tests and an opt-in live Google Maps E2E check. The default suite does not require Internet or reach Google Maps.
+Phase 0 — baseline audit, Phase 1 — regression safety, and the controlled implementation of v0.7.1 Google Maps stability are complete in source. The permanent suite has deterministic unit tests, controlled integration tests and an opt-in live Google Maps E2E check. The default suite does not require Internet or reach Google Maps. Live Maps validation and capacity measurements have not been authorized or executed, so external stability remains unverified.
 
-The application remains a CLI-first Google Maps pipeline with Website Engine enrichment and CSV/XLSX export. `ProspectorEngine` and `EngineConfig` do not yet exist.
+The application remains a CLI-first Google Maps pipeline with Website Engine enrichment and CSV/XLSX export. Controlled v0.7.1 work adds bounded feed collection and stronger detail identity checks. `BrowserRuntime` now owns per-search resources. `EngineConfig`, module logging and a provisional `ProspectorEngine` facade exist, but the Engine maximum and public Error Model require human approval. The CLI still uses the transitional `search_businesses` boundary.
 
 ## v0.7.x — TARGET_V0_7_X
 
@@ -38,7 +38,7 @@ The stabilization line covers:
 6. an internal `ProspectorEngine(config).search(query)` facade;
 7. migration of the CLI to consume that facade.
 
-The exact patch-version decomposition is deferred and is not defined here.
+The approved Master Plan defines the patch sequence; this roadmap records only verified current behavior and line-level targets.
 
 ## v0.8.x — TARGET_V0_8
 

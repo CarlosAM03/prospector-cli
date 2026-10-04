@@ -1,245 +1,101 @@
-from models.business import Business
+"""Ordered, bounded collection from the Google Maps virtual result feed."""
+
+import time
+import logging
 
 from engines.selector.lazycharge import LazyChargeEngine
+from models.business import Business
 
 from .parser import parse_business_summary
 from .selectors import create_selector_engine
 
 
-PROFILE = "google_maps"
+# Internal safety budgets, not public configuration or source-total claims.
+MAX_SCROLL_ATTEMPTS = 80
+MAX_IDLE_ATTEMPTS = 6
+MAX_LOADING_SECONDS = 90
+SCROLL_OBSERVATION_SECONDS = 1.5
+logger = logging.getLogger(__name__)
 
 
-def extract_businesses(
-    page,
-    limit: int,
-):
+def extract_businesses(page, limit: int) -> list[dict]:
+    """Collect valid first-seen source candidates in discovery order.
+
+    Source hrefs prevent a recycled card from being processed twice. They
+    are not a business deduplication or a name-merging rule.
     """
-    Extract businesses from the Google Maps
-    result list.
+    selector = create_selector_engine(page)
+    feed = LazyChargeEngine(page, "google_maps").wait_feed()
 
-    This stage is responsible only for the
-    first extraction pass.
+    if limit <= 0:
+        # Preserve the legacy path: navigation, feed and result election still
+        # occur, but no Businesses are processed or returned.
+        selector.locator("results")
+        return []
 
-    Responsibilities
-    ----------------
+    links = feed.locator(selector.selectors("results")[0])
+    results: list[dict] = []
+    seen_hrefs: set[str] = set()
+    deadline = time.monotonic() + MAX_LOADING_SECONDS
+    idle = 0
+    attempts = 0
 
-    - Wait for the result feed.
-    - Load additional results.
-    - Extract summary information.
-    - Build temporary Business instances.
-    - Generate an internal identity used by
-      later pipeline stages.
+    while attempts < MAX_SCROLL_ATTEMPTS and time.monotonic() < deadline:
+        new_valid = 0
+        # Capture each visible batch before scrolling can recycle its nodes.
+        for index in range(links.count()):
+            link = links.nth(index)
+            name = link.get_attribute("aria-label")
+            href = link.get_attribute("href")
+            if not name or not href or href in seen_hrefs:
+                continue
 
-    This stage never opens the detail panel.
-    """
-
-    businesses = []
-
-    selector = create_selector_engine(
-        page
-    )
-
-    lazycharge = LazyChargeEngine(
-        page=page,
-        profile=PROFILE,
-    )
-
-    #
-    # Wait until the result feed
-    # becomes available.
-    #
-
-    lazycharge.wait_feed()
-
-    links = selector.locator(
-        "results"
-    )
-
-    #
-    # Load additional results before
-    # starting the first extraction.
-    #
-
-    _charge_results(
-        page=page,
-        selector=selector,
-        limit=limit,
-    )
-
-    print(
-        "Lugares encontrados:",
-        links.count(),
-    )
-
-    total = min(
-        links.count(),
-        limit,
-    )
-
-    for index in range(total):
-
-        link = links.nth(
-            index
-        )
-
-        name = link.get_attribute(
-            "aria-label"
-        )
-
-        href = link.get_attribute(
-            "href"
-        )
-
-        if not name or not href:
-            continue
-
-        article = link.locator(
-            selector.selectors(
-                "result_article"
-            )[0]
-        )
-
-        info_blocks = article.locator(
-            selector.selectors(
-                "info_block"
-            )[0]
-        )
-
-        (
-            category,
-            address,
-            phone,
-        ) = parse_business_summary(
-            info_blocks
-        )
-
-        businesses.append(
-            {
+            article = link.locator(selector.selectors("result_article")[0])
+            blocks = article.locator(selector.selectors("info_block")[0])
+            category, address, phone = parse_business_summary(blocks)
+            seen_hrefs.add(href)
+            new_valid += 1
+            results.append({
                 "href": href,
-                "identity": {
-                    "index": index,
-                    "name": name,
-                    "href": href,
-                },
+                "identity": {"index": index, "name": name, "href": href},
                 "business": Business(
-                    name=name,
-                    category=category,
-                    address=address,
-                    phone=phone,
+                    name=name, category=category, address=address, phone=phone
                 ),
-            }
-        )
+            })
+            if len(results) >= limit:
+                logger.debug("Maps feed reached requested limit: count=%d", len(results))
+                return results
 
-    print(
-        "Negocios encontrados:",
-        len(businesses),
-    )
-
-    return businesses
-
-
-def _charge_results(
-    page,
-    selector,
-    limit: int,
-):
-    """
-    Progressively load Google Maps
-    search results using virtual
-    scrolling.
-
-    This function is responsible only
-    for loading additional result cards.
-
-    It does not perform extraction.
-    """
-
-    feed = selector.locator(
-        "feed"
-    )
-
-    links = selector.locator(
-        "results"
-    )
-
-    previous_count = -1
-
-    stable_cycles = 0
-
-    max_stable_cycles = 4
-
-    while True:
-
-        current_count = links.count()
-
-        print(
-            "Antes:",
-            current_count,
-        )
-
-        if current_count >= limit:
-
-            print(
-                "Límite alcanzado."
-            )
-
+        idle = 0 if new_valid else idle + 1
+        if idle >= MAX_IDLE_ATTEMPTS:
             break
+        _charge_results(page, feed, links, seen_hrefs, deadline)
+        attempts += 1
+
+    if not results:
+        # Without an evidence-backed Maps empty marker, zero cards are not
+        # proof that the source returned a legitimate empty result.
+        logger.warning("Maps feed indeterminate: attempts=%d idle=%d", attempts, idle)
+        raise LookupError("Google Maps feed ended without verifiable results")
+    logger.info(
+        "Maps feed returned available candidates: count=%d attempts=%d idle=%d",
+        len(results), attempts, idle,
+    )
+    return results
 
 
-        if current_count == previous_count:
-
-            stable_cycles += 1
-
-        else:
-
-            stable_cycles = 0
-
-
-        if stable_cycles >= max_stable_cycles:
-
-            print(
-                "Google Maps dejó de cargar resultados."
-            )
-
-            break
-
-
-        previous_count = current_count
-
-
-        #
-        # Scroll only the
-        # result feed.
-        #
-
-        feed.hover()
-
-        page.mouse.wheel(
-            0,
-            1800,
-        )
-
-
-        #
-        # Wait for Google Maps
-        # virtual scrolling cycle.
-        #
-        # The loading spinner is not
-        # guaranteed during feed updates.
-        #
-
+def _charge_results(page, feed, links, seen_hrefs, deadline) -> None:
+    """Scroll the source feed and wait only for useful candidate progress."""
+    feed.hover()
+    page.mouse.wheel(0, 1800)
+    observation_end = min(deadline, time.monotonic() + SCROLL_OBSERVATION_SECONDS)
+    while time.monotonic() < observation_end:
+        for index in range(links.count()):
+            link = links.nth(index)
+            href = link.get_attribute("href")
+            name = link.get_attribute("aria-label")
+            if href and name and href not in seen_hrefs:
+                return
         page.wait_for_timeout(
-            1000,
+            min(100, max(1, int((observation_end - time.monotonic()) * 1000)))
         )
-
-
-        print(
-            "Después:",
-            links.count(),
-        )
-
-
-    print(
-        "Resultados cargados:",
-        links.count(),
-    )
