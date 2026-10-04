@@ -22,9 +22,9 @@ These are historical milestones and architectural context. Some old objective wo
 
 ## Current checkpoint — CURRENT
 
-Phase 0 — baseline audit, Phase 1 — regression safety, and the controlled implementation of v0.7.1 Google Maps stability are complete in source. The permanent suite has deterministic unit tests, controlled integration tests and an opt-in live Google Maps E2E check. The default suite does not require Internet or reach Google Maps. Live Maps validation and capacity measurements have not been authorized or executed, so external stability remains unverified.
+Phase 0 — baseline audit, Phase 1 — regression safety, and controlled Google Maps hardening are complete in source. The permanent suite has deterministic unit tests, controlled integration tests and an opt-in live Google Maps E2E check. The default suite remains offline. A separately authorized C05 pilot ran three of eight planned combinations and stopped at the 180-second hard timeout on the third.
 
-The application remains a CLI-first Google Maps pipeline with Website Engine enrichment and CSV/XLSX export. Controlled v0.7.1 work adds bounded feed collection and stronger detail identity checks. `BrowserRuntime` now owns per-search resources. `EngineConfig`, module logging and a provisional `ProspectorEngine` facade exist, but the Engine maximum and public Error Model require human approval. The CLI still uses the transitional `search_businesses` boundary.
+The application remains a CLI-first Google Maps pipeline with Website Engine enrichment and CSV/XLSX export. `BrowserRuntime` owns per-search resources; `SearchResult.issues` and typed fatal errors are implemented; the CLI calls `ProspectorEngine` with an optional requested limit defaulting to 50. The Engine maximum is still pending approval, so the CLI reports that block before browser access. The legacy wrapper remains available. Pilot runs at limits 3 and 10 returned Businesses but no verified detail enrichment; the limit-25 run timed out. The pilot does not establish full-pipeline capacity.
 
 ## v0.7.x — TARGET_V0_7_X
 

@@ -46,6 +46,9 @@ class Panel:
     def inner_text(self, timeout=1000):
         return self.page.state["text"]
 
+    def is_visible(self):
+        return bool(self.page.state.get("visible", True))
+
     def locator(self, selector):
         return Field(self.page, selector)
 
@@ -62,6 +65,9 @@ class PanelList:
     def first(self):
         return self
 
+    def nth(self, index):
+        return Panel(self.page)
+
     def count(self):
         return int(self.page.state.get("visible", True))
 
@@ -73,7 +79,7 @@ class Target:
     def __init__(self, page):
         self.page = page
 
-    def get_attribute(self, name):
+    def get_attribute(self, name, timeout=None):
         return self.page.target_href
 
     def click(self, timeout=3000):
@@ -201,3 +207,22 @@ def test_t_d10_missing_place_id_preserves_summary(monkeypatch):
     page = Page("/maps/place/Cafe/")
     assert run(monkeypatch, page).address == "Summary address"
     assert not page.clicked
+
+
+def test_stale_optional_fields_are_not_merged_after_new_title_and_url(monkeypatch):
+    def transition(page):
+        page.url = f"https://www.google.com{page.target_href}"
+        page.state = {
+            "title": "Cafe", "text": "Cafe new heading, old optional fields",
+            "address": "Old address", "phone": "Old phone",
+            "website": "https://old.test",
+        }
+
+    page = Page(href("target"), transition)
+    page.state["phone"] = "Old phone"
+    page.state["website"] = "https://old.test"
+    business = Business(name="Cafe", address="Summary address", phone="Summary phone")
+    result = run(monkeypatch, page, business=business)
+    assert (result.address, result.phone, result.website) == (
+        "Summary address", "Summary phone", None
+    )

@@ -20,7 +20,9 @@ from playwright.sync_api import (
     Browser,
     Page,
 )
+import time
 
+from engines._timing import remaining_ms
 from engines.selector import SelectorEngine
 
 
@@ -38,6 +40,7 @@ class GoogleMapsNavigation:
     """
 
     MAPS_URL = "https://www.google.com/maps"
+    NAVIGATION_SECONDS = 50
 
     def __init__(
         self,
@@ -49,6 +52,7 @@ class GoogleMapsNavigation:
         self.browser = browser
         self.profile = profile
         self._page_factory = page_factory or browser.new_page
+        self._deadline = None
 
     def open(
         self,
@@ -62,11 +66,13 @@ class GoogleMapsNavigation:
             Playwright page positioned at the Google Maps home.
         """
 
+        self._deadline = time.monotonic() + self.NAVIGATION_SECONDS
         page = self._page_factory()
 
         page.goto(
             self.MAPS_URL,
             wait_until="domcontentloaded",
+            timeout=remaining_ms(self._deadline, 15000),
         )
 
         #
@@ -82,7 +88,9 @@ class GoogleMapsNavigation:
             profile=self.profile,
         )
 
-        selector.wait_visible("search_box", timeout=10000)
+        selector.wait_visible(
+            "search_box", timeout=remaining_ms(self._deadline, 10000)
+        )
 
         return page
 
@@ -107,21 +115,24 @@ class GoogleMapsNavigation:
             page=page,
             profile=self.profile,
         )
+        deadline = self._deadline or time.monotonic() + self.NAVIGATION_SECONDS
 
-        search_box = selector.wait_visible("search_box", timeout=10000)
+        search_box = selector.wait_visible(
+            "search_box", timeout=remaining_ms(deadline, 10000)
+        )
         #
         # Google Maps may recreate the input element
         # after the initial application mount.
         #
         # Resolve the locator immediately before typing.
         #
-        search_box.fill(query)
+        search_box.fill(query, timeout=remaining_ms(deadline, 10000))
 
-        search_box.press("Enter")
+        search_box.press("Enter", timeout=remaining_ms(deadline, 10000))
         
         page.wait_for_url(
             "**/maps/search/**",
-            timeout=15000,
+            timeout=remaining_ms(deadline, 15000),
         )
 
         #
@@ -131,6 +142,6 @@ class GoogleMapsNavigation:
         # from the Home view to the Search Results view.
         #
 
-        selector.wait_visible("feed", timeout=10000)
+        selector.wait_visible("feed", timeout=remaining_ms(deadline, 10000))
         # The URL and a mounted feed alone do not prove usable results.
-        selector.wait_visible("results", timeout=10000)
+        selector.wait_visible("results", timeout=remaining_ms(deadline, 10000))

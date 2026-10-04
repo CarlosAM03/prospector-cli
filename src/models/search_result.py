@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 
 from models.business import Business
 from models.search_query import SearchQuery
+from models.search_issue import SearchIssue
 
 
 @dataclass
@@ -14,6 +15,8 @@ class SearchResult:
     )
 
     execution_time: float = 0.0
+
+    issues: list[SearchIssue] = field(default_factory=list)
 
     @property
     def total_found(self) -> int:

@@ -11,7 +11,7 @@ Use these distinctions when reviewing a change:
 - `TARGET_V0_7_X`, `TARGET_V0_8`, `TARGET_V0_9`, `TARGET_V1_0`: future scope;
 - `DEFERRED_DESIGN`: approved problem whose exact technical contract is not selected yet.
 
-`EngineConfig` and a provisional `ProspectorEngine` facade are present under the approved v0.7.x plan. Do not treat their unsettled maximum and public error contract as approved. Do not implement normalization, deduplication or public structured errors merely because they appear in target documentation.
+`EngineConfig`, `ProspectorEngine` and the approved public Error Model are present under the v0.7.x plan. Do not invent an operational maximum or treat the blocked Engine/CLI route as release-ready. Do not implement normalization or deduplication merely because they appear in target documentation.
 
 ## Project Philosophy
 

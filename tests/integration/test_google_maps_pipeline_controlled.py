@@ -5,8 +5,9 @@ import csv
 import pytest
 
 from models.business import Business
-from engines._issue_draft import _IssueCollector
+from engines.issue_collector import IssueCollector
 from models.search_query import SearchQuery, Source
+from models.search_issue import SearchIssue
 from scraper.google_maps import scraper
 from services.export_service import ExportFormat, ExportService
 
@@ -88,6 +89,7 @@ def test_t_i02_order_limit_query_and_total_found(monkeypatch):
 def test_t_i03_partial_result_still_exports_legacy_schema(monkeypatch, tmp_path):
     _, query = setup(monkeypatch, [record("A", "1")])
     result = scraper.search_businesses(query, 2)
+    result.issues.append(SearchIssue("feed", "partial_results", "Safe."))
     monkeypatch.chdir(tmp_path)
     path = ExportService.export(result, ExportFormat.CSV)
     with open(path, newline="", encoding="utf-8") as stream:
@@ -116,9 +118,9 @@ def test_t_i06_normal_and_fatal_paths_close_once_preserving_exception(monkeypatc
     assert browser.closes == 1
 
 
-def test_private_issue_collector_crosses_pipeline_without_public_schema(monkeypatch):
+def test_issues_cross_pipeline_into_public_search_result(monkeypatch):
     _, query = setup(monkeypatch, [record("Cafe", "1")])
-    collector = _IssueCollector()
+    collector = IssueCollector()
     def inspect(**kwargs):
         kwargs["issue_collector"].record("website", "inspection_unavailable")
         return kwargs["businesses"]
@@ -128,6 +130,22 @@ def test_private_issue_collector_crosses_pipeline_without_public_schema(monkeypa
         issue_collector=collector,
     )
     assert result.total_found == 1
-    assert [(x.stage, x.reason) for x in collector.items] == [
+    assert [(x.stage, x.code) for x in collector.items] == [
         ("website", "inspection_unavailable")
     ]
+    assert result.issues == collector.items
+
+
+def test_internal_pilot_metrics_do_not_change_result_contract(monkeypatch):
+    _, query = setup(monkeypatch, [record("Cafe", "1")])
+    metrics = {}
+    result = scraper._run_google_maps(
+        query, 1, headless=True, website_enrichment=True,
+        metrics_sink=metrics,
+    )
+    assert result.total_found == 1
+    assert metrics["observed_candidates"] == 1
+    assert metrics["cleanup_completed"] is True
+    assert all(metrics[key] >= 0 for key in (
+        "navigation_seconds", "feed_seconds", "detail_seconds", "website_seconds"
+    ))

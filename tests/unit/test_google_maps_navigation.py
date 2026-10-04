@@ -24,10 +24,13 @@ class Locator:
     def first(self):
         return self
 
-    def fill(self, value):
+    def nth(self, index):
+        return self
+
+    def fill(self, value, timeout=None):
         self.page.filled = value
 
-    def press(self, key):
+    def press(self, key, timeout=None):
         self.page.submitted = key == "Enter"
         if self.page.route_changes:
             self.page.url = "https://www.google.com/maps/search/cafes"
@@ -43,7 +46,7 @@ class Page:
         self.filled = None
         self.submitted = False
 
-    def goto(self, url, wait_until):
+    def goto(self, url, wait_until, timeout=None):
         self.url = url
 
     def locator(self, selector):

@@ -222,7 +222,7 @@ class LazyChargeEngine:
         becomes available.
         """
 
-        return self._selector.wait_visible("detail_panel", timeout=timeout).last
+        return self._selector.wait_visible("detail_panel", timeout=timeout)
     
     def wait_detail_content(
         self,

@@ -1,6 +1,11 @@
+from dataclasses import FrozenInstanceError
+
+import pytest
+
 from models.business import Business
 from models.search_query import SearchQuery, Source
 from models.search_result import SearchResult
+from models.search_issue import SearchIssue
 from models.website_document import WebsiteDocument
 from models.website_metadata import WebsiteMetadata
 
@@ -41,7 +46,22 @@ def test_default_lists_are_independent_between_instances():
     second_metadata = WebsiteMetadata()
 
     first_result.businesses.append(Business("A"))
+    first_result.issues.append(SearchIssue("feed", "partial_results", "Safe."))
     first_metadata.emails.append("a@example.test")
 
     assert second_result.businesses == []
+    assert second_result.issues == []
     assert second_metadata.emails == []
+
+
+def test_legacy_positional_search_result_and_public_issue_order():
+    query = SearchQuery(Source.GOOGLE_MAPS, "cafes", "Tijuana")
+    result = SearchResult(query, [Business("A")], 1.25)
+    assert result.issues == [] and result.total_found == 1
+    first = SearchIssue("detail", "identity_unverifiable", "Safe detail message")
+    second = SearchIssue("website", "inspection_unavailable", "Safe website message")
+    result.issues.extend([first, second])
+    assert result.issues == [first, second]
+    assert result.total_found == 1
+    with pytest.raises(FrozenInstanceError):
+        first.code = "different"

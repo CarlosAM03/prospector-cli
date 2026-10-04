@@ -53,7 +53,7 @@ The first pass parses available name, category, address, phone and Maps href dat
 
 ## Detail enrichment
 
-The detail stage confirms the target click, checks a verifiable target place ID in navigation state, requires a fresh matching panel and compares names using only whitespace trimming/collapse and case-insensitive matching. It stages optional fields and applies nonempty values only after identity is rechecked. If a target cannot be verified, the summary Business remains unchanged. Concrete selectors, waits and URL assumptions remain source-specific implementation details. A private issue collector can record skipped detail enrichment, but no approved public issue schema exists yet.
+The detail stage confirms the exact target click, checks a verifiable target place ID in navigation state, requires a fresh matching panel and compares names using only whitespace trimming/collapse and case-insensitive matching. A bounded reverse/forward feed search can recover an exact recycled href; failed recovery preserves the summary. Optional values equal to the prior panel's fields are not attributed to the new Business based on two stable reads alone. Recoverable skips are reported through `SearchResult.issues`. Concrete selectors, waits and URL assumptions remain source-specific implementation details.
 
 The identity-first enrichment design exists to avoid associating a later panel state with the wrong result. The first pass retains stable information such as the extracted name and Maps href; subsequent phases validate the expected identity before mutating the same `Business` object. This is a design rationale, not a claim that all current synchronization is deterministic.
 
@@ -63,7 +63,7 @@ When a website is available, the scraper delegates inspection to Website Engine.
 
 ## Runtime variability and debt
 
-Live execution is externally variable. The earlier baseline observed successful runs as well as navigation `TimeoutError` and selector `LookupError` in equivalent small runs. Controlled offline tests cover state, progress, identity, optional enrichment and runtime cleanup, but there has been no authorized live Maps validation. Browser lifecycle now belongs to `BrowserRuntime` and internal diagnostics use module loggers. Source-specific selectors, heterogeneous public exceptions and incomplete contact/about/content type metadata remain technical debt or future work.
+Live execution is externally variable. Controlled offline tests cover state, progress, identity, optional enrichment and runtime cleanup. In the single authorized C05 pilot, requests for 3 and 10 Businesses returned that many summaries, but all detail attempts remained unverified; a 25-Business request reached the hard 180-second process timeout and stopped the pilot. These outcomes do not establish a safe Engine maximum or a reliable empty-state marker. Browser lifecycle belongs to `BrowserRuntime`; Engine fatal boundaries use typed exceptions, while the legacy wrapper retains historical behavior.
 
 ## Target — TARGET_V0_7_X / TARGET_V1_0
 

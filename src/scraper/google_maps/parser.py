@@ -1,7 +1,8 @@
 from utils.parser import is_phone
+from engines._timing import remaining_ms
 
 
-def parse_business_summary(info_blocks):
+def parse_business_summary(info_blocks, *, deadline=None):
 
     category = None
     address = None
@@ -9,7 +10,11 @@ def parse_business_summary(info_blocks):
 
     for block_index in range(info_blocks.count()):
 
-        text = info_blocks.nth(block_index).inner_text()
+        block = info_blocks.nth(block_index)
+        text = (
+            block.inner_text(timeout=remaining_ms(deadline, 1000))
+            if deadline is not None else block.inner_text()
+        )
 
         parts = [
             item.strip()

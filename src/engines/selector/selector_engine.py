@@ -93,8 +93,10 @@ class SelectorEngine:
             for candidate in candidates:
                 try:
                     locator = self._elector.page.locator(candidate)
-                    if locator.count() and locator.first.is_visible():
-                        return locator
+                    for index in range(locator.count()):
+                        selected = locator.nth(index)
+                        if selected.is_visible():
+                            return selected
                 except Exception:
                     continue
             remaining = deadline - time.monotonic()

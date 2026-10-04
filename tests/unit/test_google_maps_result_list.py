@@ -1,8 +1,10 @@
 """Controlled virtual-feed contracts from the v0.7.1 Gate B matrix."""
 
 import pytest
+from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
 from scraper.google_maps import result_list
+from engines.issue_collector import IssueCollector
 
 
 class Blocks:
@@ -16,10 +18,14 @@ class Article:
 
 
 class Link:
-    def __init__(self, card):
+    def __init__(self, page, card):
+        self.page = page
         self.card = card
 
-    def get_attribute(self, name):
+    def get_attribute(self, name, timeout=None):
+        if self.card.get("_stall"):
+            self.page.clock += timeout / 1000
+            raise PlaywrightTimeoutError("bounded attribute wait")
         return self.card.get(name)
 
     def locator(self, selector):
@@ -34,7 +40,7 @@ class Links:
         return len(self.page.cards)
 
     def nth(self, index):
-        return Link(self.page.cards[index])
+        return Link(self.page, self.page.cards[index])
 
 
 class Feed:
@@ -44,7 +50,7 @@ class Feed:
     def locator(self, selector):
         return Links(self.page)
 
-    def hover(self):
+    def hover(self, timeout=None):
         if self.page.hover_fails:
             raise RuntimeError("feed hover failed")
 
@@ -98,13 +104,15 @@ def collect(monkeypatch, batches, limit, *, attempts=20, idle=3, seconds=30,
     monkeypatch.setattr(result_list, "create_selector_engine", lambda p: Selector(p))
     monkeypatch.setattr(
         result_list, "LazyChargeEngine",
-        lambda p, profile: type("Wait", (), {"wait_feed": lambda self: Feed(p)})(),
+        lambda p, profile: type("Wait", (), {"wait_feed": lambda self, timeout=10000: Feed(p)})(),
     )
     monkeypatch.setattr(result_list.time, "monotonic", lambda: page.clock)
     monkeypatch.setattr(result_list, "MAX_SCROLL_ATTEMPTS", attempts)
     monkeypatch.setattr(result_list, "MAX_IDLE_ATTEMPTS", idle)
     monkeypatch.setattr(result_list, "MAX_LOADING_SECONDS", seconds)
-    return page, lambda: result_list.extract_businesses(page, limit)
+    return page, lambda issue_collector=None: result_list.extract_businesses(
+        page, limit, issue_collector=issue_collector
+    )
 
 
 def names(results):
@@ -196,3 +204,22 @@ def test_t_f14_same_name_distinct_source_ids_are_not_merged(monkeypatch):
     results = run()
     assert names(results) == ["Cafe", "Cafe"]
     assert results[0]["href"] != results[1]["href"]
+
+
+def test_attribute_auto_wait_cannot_overrun_feed_deadline(monkeypatch):
+    page, run = collect(
+        monkeypatch, [[card("A", "1"), {"_stall": True}]],
+        3, seconds=0.4,
+    )
+    assert names(run()) == ["A"]
+    assert page.clock <= 0.401
+    assert page.wheels == 0
+
+
+def test_bounded_partial_feed_records_one_recoverable_issue(monkeypatch):
+    _, run = collect(monkeypatch, [[card("A", "1")]], 3, idle=2)
+    collector = IssueCollector()
+    assert names(run(collector)) == ["A"]
+    assert [(issue.stage, issue.code) for issue in collector.items] == [
+        ("feed", "partial_results")
+    ]

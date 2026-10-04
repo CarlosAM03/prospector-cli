@@ -3,9 +3,9 @@ from models.search_query import (
     Source,
 )
 
-from scraper.google_maps.scraper import (
-    search_businesses,
-)
+from engines.config import EngineConfig
+from engines.errors import ProspectorError
+from engines.prospector_engine import ProspectorEngine
 
 from services.export_service import (
     ExportFormat,
@@ -145,6 +145,16 @@ def choose_main_option() -> str:
     ).strip()
 
 
+def parse_requested_limit(raw: str) -> int:
+    """Parse CLI input; Engine owns the separate maximum policy."""
+    value = raw.strip()
+    if not value:
+        return 100
+    if not value.isdecimal() or int(value) <= 0:
+        raise ValueError("Limit must be a positive whole number.")
+    return int(value)
+
+
 
 def execute_search() -> None:
 
@@ -157,6 +167,10 @@ def execute_search() -> None:
         "Location : "
     ).strip()
 
+    limit_text = input(
+        "Limit (default 100) : "
+    )
+
 
     print()
 
@@ -168,10 +182,12 @@ def execute_search() -> None:
     )
 
 
-    result = search_businesses(
-        query=query,
-        limit=500,
-    )
+    try:
+        limit = parse_requested_limit(limit_text)
+        result = ProspectorEngine(EngineConfig(limit=limit)).search(query)
+    except (ValueError, ProspectorError) as error:
+        print(f"Search could not start: {error}")
+        return
 
 
     separator()
@@ -193,6 +209,13 @@ def execute_search() -> None:
         f"Execution Time   : "
         f"{result.execution_time:.2f} seconds"
     )
+
+    print(
+        f"Recoverable Issues: {len(result.issues)}"
+    )
+
+    for issue in result.issues:
+        print(f"  {issue.stage}/{issue.code}: {issue.message}")
 
 
     separator()

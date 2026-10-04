@@ -23,7 +23,7 @@ The current programmatic boundary is:
 search_businesses(query: SearchQuery, limit: int = 50) -> SearchResult
 ```
 
-This is transitional, not the approved stable `v1.0.0` Engine contract. The interactive CLI currently invokes the pipeline with `limit=500`. That limit bounds Businesses processed/returned; it does not guarantee that Google Maps loads no additional DOM nodes.
+This wrapper remains transitional and preserves its default of 50, including the legacy nonpositive-limit behavior. The CLI now asks for an optional positive limit with default 50 and calls `ProspectorEngine`. Because `engine_max_limit` has not been approved, the Engine currently rejects CLI searches explicitly before browser access. No value has been inferred from the old CLI request of 500.
 
 Businesses may remain partially enriched when detail-panel or website inspection cannot provide every field. Website inspection currently covers basic status/final URL, title, description, language and email extraction. Contact/about detection and effective `content_type` output remain incomplete.
 
@@ -65,7 +65,7 @@ The audit/regression checkpoint observed compatibility with Python 3.13.4, pytes
 python src/main.py
 ```
 
-The CLI asks for keyword and location, runs the current Google Maps pipeline and offers CSV/XLSX export. It opens a visible Chromium browser under the current implementation.
+The CLI asks for keyword, location and an optional limit. It presents recoverable issues and offers CSV/XLSX export after a successful search. Until an operational Engine maximum is approved, it displays that policy error before starting a browser. The programmatic `search_businesses` wrapper remains available with its legacy behavior.
 
 ## Exports
 
@@ -105,7 +105,7 @@ See `tests/README.md` and `docs/contributing.md` for the test policy and contrib
 
 ## Architecture direction
 
-`BrowserRuntime` now owns Playwright/browser lifecycle for each search. The Google Maps pipeline owns source-specific extraction, while reusable components use module logging for diagnostics. The public error contract remains unsettled.
+`BrowserRuntime` owns Playwright/browser lifecycle for each search. The Google Maps pipeline owns source-specific extraction, while reusable components use module logging for diagnostics. `SearchResult.issues` and fatal `ProspectorError` categories now provide the approved Error Model; the Engine maximum remains unsettled.
 
 The approved target is:
 
@@ -115,7 +115,7 @@ CLI adapter -> ProspectorEngine(config) -> extraction pipeline -> SearchResult
                                                         +-> ExportService -> CSV/XLSX
 ```
 
-`EngineConfig` and a provisional `ProspectorEngine` facade exist. The facade is not the stable programmatic boundary until an operational maximum and public error schema are approved. Formal normalization, public structured issues, multi-input, deduplication and merge remain future work. Physical extraction into a separately packaged Engine is a post-v1 possibility, not a prerequisite for `v1.0.0`.
+`EngineConfig` and `ProspectorEngine` are integrated with the CLI, but the facade cannot execute a normal search until an operational maximum is approved. The wrapper remains the legacy programmatic path. Formal normalization, multi-input, deduplication and merge remain future work. Physical extraction into a separately packaged Engine is a post-v1 possibility, not a prerequisite for `v1.0.0`.
 
 ## Project evolution
 

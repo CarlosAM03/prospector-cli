@@ -36,7 +36,7 @@ source-specific pipeline
 external browser, network or parsing libraries
 ```
 
-The current CLI still calls the concrete Google Maps boundary directly. A provisional `ProspectorEngine` facade exists, but its operational maximum and public error semantics are not approved, so the CLI has not migrated to it.
+The CLI now calls `ProspectorEngine`, which delegates to the Google Maps source pipeline. The operational maximum is not approved, so this route rejects searches before source I/O. The legacy `search_businesses` wrapper remains a separate compatibility entrypoint.
 
 ### Engine, utility and scraper
 
@@ -47,7 +47,8 @@ An **Engine** coordinates reusable execution behavior or infrastructure, such as
 ```text
 main.py
   -> SearchQuery
-  -> search_businesses(query, limit=500)
+  -> EngineConfig(limit=interactive value or 50)
+  -> ProspectorEngine.search(query)
        -> BrowserRuntime -> Playwright / Chromium
        -> NavigationEngine -> GoogleMapsNavigation
        -> Google Maps virtual/infinite feed loading
@@ -56,13 +57,16 @@ main.py
        -> Website Engine enrichment
        -> SearchResult
   -> ExportService -> CSV/XLSX
+
+legacy Python caller -> search_businesses(query, limit=50)
+                   -> same Google Maps source pipeline
 ```
 
-The current `search_businesses(query, limit)` function is the observable programmatic boundary and is transitional.
+The `search_businesses(query, limit)` function remains a transitional compatibility boundary. It does not impose the new EngineConfig maximum retroactively.
 
 ### Current components
 
-`main.py` owns interactive input, query construction, coordination of the concrete scraper call, user-facing output and export selection. It currently knows more extraction detail than the target architecture allows.
+`main.py` owns interactive input, query construction, Engine invocation, user-facing results/issues/errors and export selection. It does not orchestrate Google Maps extraction stages.
 
 `src/models/` contains `Business`, `SearchQuery`, `SearchResult`, `WebsiteDocument` and `WebsiteMetadata`. `Business` is mutable and may be partially enriched. `SearchResult` preserves query, ordered Businesses, execution time and `total_found`.
 
@@ -70,7 +74,7 @@ The current `search_businesses(query, limit)` function is the observable program
 
 `src/scraper/google_maps/` coordinates feed loading, summary parsing, detail identity validation and website enrichment. `BrowserRuntime` owns Playwright, the browser and Maps pages for each execution. WebsiteCrawler closes its short-lived inspection pages.
 
-`EngineConfig` validates a requested limit, headless mode and optional website enrichment. The separate `engine_max_limit` policy is still unapproved; the provisional facade rejects normal searches until that policy is supplied. An internal issue collector records controlled detail and website failures, but it is not a public `SearchResult` contract.
+`EngineConfig` validates a requested limit, headless mode and optional website enrichment. The separate `engine_max_limit` policy is still unapproved, so the facade rejects normal searches until that policy is supplied. A per-execution collector propagates recoverable detail, website and partial-feed issues into the public `SearchResult.issues` list. Fatal Engine errors use typed `ProspectorError` categories with chained causes.
 
 `src/engines/website/` contains crawling, parsing, extraction, email extraction, language detection and metadata construction. Basic status/final URL, title, description, language and email behavior is covered by controlled tests. Contact/about flags and effective `content_type` output remain incomplete.
 
@@ -92,7 +96,7 @@ Google Maps is the only implemented/supported prospect source today. The abstrac
 
 ## Current technical debt — TECHNICAL_DEBT
 
-Remaining technical debt includes the unapproved Engine maximum, a public recoverable/fatal Error Model, CLI migration, source-specific scrolling parameters and selector/URL assumptions, incomplete contact/about/content type metadata, and live Maps validation. Reusable components use module loggers without setting global logging policy; CLI presentation remains in `main.py`.
+Remaining technical debt includes the unapproved Engine maximum, source-specific selector/URL assumptions, incomplete contact/about/content type metadata and live detail identity performance. The authorized C05 pilot returned 3 and 10 Businesses with summary data only; a 25 request hit its 180-second hard timeout, so no full-pipeline capacity maximum was established. Reusable components use module loggers without setting global logging policy; CLI presentation remains in `main.py`.
 
 ## Approved target architecture — TARGET_V0_7_X / TARGET_V1_0
 
@@ -110,7 +114,7 @@ CLI adapter       other Python consumer / future API
                                     CSV      XLSX
 ```
 
-The target means the Engine owns reusable prospecting orchestration; the CLI owns input/presentation; and `ExportService` consumes `SearchResult` without belonging inside extraction core. `EngineConfig` and a provisional facade now exist. `output_path` remains outside EngineConfig. The facade cannot be treated as a completed public boundary until the Engine maximum and Error Model contract are approved and integrated.
+The target means the Engine owns reusable prospecting orchestration; the CLI owns input/presentation; and `ExportService` consumes `SearchResult` without belonging inside extraction core. These boundaries and the approved Error Model are implemented. `output_path` remains outside EngineConfig. The Engine/CLI route is not operationally complete until the maximum policy is approved and validated.
 
 ## Version boundaries
 

@@ -30,7 +30,7 @@ def enrich_websites(
             if issue_collector is not None:
                 issue_collector.record(
                     "website", "inspection_unavailable",
-                    candidate=business.website, error=error,
+                    error=error,
                 )
             continue
     return businesses
