@@ -21,6 +21,11 @@ SCROLL_OBSERVATION_SECONDS = 1.5
 logger = logging.getLogger(__name__)
 
 
+def _verified_source_end(page) -> bool:
+    """No reliable live Maps terminal marker has been established (H03)."""
+    return False
+
+
 def extract_businesses(page, limit: int, issue_collector=None) -> list[dict]:
     """Collect valid first-seen source candidates in discovery order.
 
@@ -44,6 +49,7 @@ def extract_businesses(page, limit: int, issue_collector=None) -> list[dict]:
     seen_hrefs: set[str] = set()
     idle = 0
     attempts = 0
+    stop_reason = "bounded_stall"
 
     while attempts < MAX_SCROLL_ATTEMPTS and time.monotonic() < deadline:
         new_valid = 0
@@ -83,13 +89,18 @@ def extract_businesses(page, limit: int, issue_collector=None) -> list[dict]:
                 return results
 
         if timed_out:
+            stop_reason = "indeterminate_failure"
             break
+        if _verified_source_end(page):
+            logger.debug("Maps feed reached a verified source end")
+            return results
         idle = 0 if new_valid else idle + 1
         if idle >= MAX_IDLE_ATTEMPTS:
             break
         try:
             _charge_results(page, feed, links, seen_hrefs, deadline)
         except PlaywrightTimeoutError:
+            stop_reason = "indeterminate_failure"
             break
         attempts += 1
 
@@ -102,7 +113,9 @@ def extract_businesses(page, limit: int, issue_collector=None) -> list[dict]:
         "Maps feed returned available candidates: count=%d attempts=%d idle=%d",
         len(results), attempts, idle,
     )
-    if issue_collector is not None and len(results) < limit:
+    if issue_collector is not None and stop_reason in (
+        "bounded_stall", "indeterminate_failure"
+    ):
         issue_collector.record("feed", "partial_results")
     return results
 

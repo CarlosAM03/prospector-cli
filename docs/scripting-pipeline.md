@@ -43,7 +43,7 @@ SearchResult
 
 ### Input and navigation
 
-The current CLI asks for keyword, location and an optional positive limit (default 50), constructs a Google Maps `SearchQuery` and invokes `ProspectorEngine`. Until an operational maximum is approved, the Engine reports that policy block before browser access. The legacy `search_businesses(query, limit=50)` wrapper remains available. For a permitted source execution, `BrowserRuntime` starts Playwright/Chromium and provides the Maps page to `NavigationEngine`/`GoogleMapsNavigation`.
+The current CLI asks for keyword, location and an optional positive limit (default 50, maximum 100), constructs a Google Maps `SearchQuery` and invokes `ProspectorEngine`. Invalid or over-maximum requests fail before browser access. The legacy `search_businesses(query, limit=50)` wrapper retains its historical input behavior. For a permitted source execution, `BrowserRuntime` starts Playwright/Chromium and provides the Maps page to `NavigationEngine`/`GoogleMapsNavigation`.
 
 ### Feed and extraction
 
@@ -51,13 +51,13 @@ Google Maps results are loaded through a virtual/infinite feed with source-speci
 
 ### Enrichment and result
 
-The detail stage validates identity before applying available data. A detail failure can leave a partial Business and adds a `SearchIssue`. Website Engine may add basic status/final URL, title, description, language and email data; inspection failure adds a recoverable issue without removing Maps data. A bounded feed stall with valid Businesses also adds an issue.
+The detail stage requires a confirmed click, exact source place ID in the resulting URL and an equivalent title in the matching visible panel before applying available data. It keeps summaries if identity remains uncertain. Optional field reads avoid long waits for absent fields; a newly rendered field can legitimately share a previous Business's value. Website Engine may add basic status/final URL, title, description, language and email data; inspection failure adds a recoverable issue without removing Maps data. A bounded feed stall with valid Businesses adds an issue. A verified source end would not; no reliable live end marker is currently established.
 
 `SearchResult` preserves query, ordered Businesses, `total_found` and execution time. Export is a subsequent operation through reusable `ExportService`.
 
 ## Not current
 
-The source does not implement general configuration profiles, a Query Builder, formal normalization, business deduplication or multi-input. `EngineConfig`, module logging, the public Error Model and a CLI-connected `ProspectorEngine` exist. The operational maximum remains pending, so the new Engine route is not yet usable for normal searches.
+The source does not implement general configuration profiles, a Query Builder, formal normalization, business deduplication or multi-input. `EngineConfig`, module logging, the public Error Model and a CLI-connected `ProspectorEngine` exist. The owner-approved Google Maps maximum is 100. The repaired route is covered offline and awaits manual live acceptance.
 
 ## Approved target — TARGET_V0_7_X / TARGET_V1_0
 

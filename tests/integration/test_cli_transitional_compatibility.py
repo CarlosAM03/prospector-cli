@@ -9,7 +9,7 @@ from scraper.google_maps import scraper
 import main as cli
 
 
-@pytest.mark.parametrize("typed_limit,expected", [("", 50), ("7", 7)])
+@pytest.mark.parametrize("typed_limit,expected", [("", 50), ("1", 1), ("50", 50), ("100", 100)])
 def test_cli_uses_engine_with_default_or_explicit_limit(
     monkeypatch, capsys, typed_limit, expected
 ):
@@ -39,7 +39,7 @@ def test_cli_uses_engine_with_default_or_explicit_limit(
     assert "feed/partial_results" in output
 
 
-@pytest.mark.parametrize("typed_limit", ["0", "-1", "abc"])
+@pytest.mark.parametrize("typed_limit", ["0", "-1", "abc", "1.5"])
 def test_cli_rejects_invalid_limit_before_engine(monkeypatch, capsys, typed_limit):
     answers = iter(["cafes", "Tijuana", typed_limit])
     monkeypatch.setattr("builtins.input", lambda prompt="": next(answers))
@@ -50,11 +50,14 @@ def test_cli_rejects_invalid_limit_before_engine(monkeypatch, capsys, typed_limi
     assert "Limit must be a positive whole number" in capsys.readouterr().out
 
 
-def test_cli_reports_unapproved_maximum_without_live_search(monkeypatch, capsys):
-    answers = iter(["cafes", "Tijuana", ""])
+def test_cli_rejects_101_before_engine_or_browser(monkeypatch, capsys):
+    answers = iter(["cafes", "Tijuana", "101"])
     monkeypatch.setattr("builtins.input", lambda prompt="": next(answers))
+    monkeypatch.setattr(cli, "ProspectorEngine", lambda config: pytest.fail(
+        "Engine constructed before limit validation"
+    ))
     cli.execute_search()
-    assert "engine_max_limit policy has not been approved" in capsys.readouterr().out
+    assert "maximum permitted limit is 100" in capsys.readouterr().out
 
 
 def test_legacy_wrapper_keeps_programmatic_default_and_unclamped_value(monkeypatch):

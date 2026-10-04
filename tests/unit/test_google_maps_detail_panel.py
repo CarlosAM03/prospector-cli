@@ -19,6 +19,15 @@ class Field:
     def last(self):
         return self
 
+    def count(self):
+        if self.selector == "h1":
+            return int(self.page.state.get("title") is not None)
+        if "address" in self.selector:
+            return int(self.page.state.get("address") is not None)
+        if "phone" in self.selector:
+            return int(self.page.state.get("phone") is not None)
+        return int(self.page.state.get("website") is not None)
+
     def inner_text(self, timeout=1000):
         if self.selector == "h1":
             value = self.page.state["title"]
@@ -37,6 +46,9 @@ class Field:
 
     def wait_for(self, **kwargs):
         return None
+
+    def evaluate(self, expression, timeout=None):
+        return self.page.state.get("node_ids", {}).get(self.selector)
 
 
 class Panel:
@@ -84,6 +96,8 @@ class Target:
 
     def click(self, timeout=3000):
         self.page.clicked = True
+        if self.page.state.get("click_fails"):
+            raise RuntimeError("click failed")
         self.page.after_click(self.page)
 
 
@@ -226,3 +240,150 @@ def test_stale_optional_fields_are_not_merged_after_new_title_and_url(monkeypatc
     assert (result.address, result.phone, result.website) == (
         "Summary address", "Summary phone", None
     )
+
+
+def test_shared_optional_values_from_new_field_nodes_are_valid(monkeypatch):
+    def transition(page):
+        page.url = f"https://www.google.com{page.target_href}"
+        page.state = {
+            "title": "Cafe", "text": "Cafe detail", "address": "Shared address",
+            "phone": "Shared phone", "website": "https://shared.test",
+            "node_ids": {"button[data-item-id='address'] .Io6YTe": 4,
+                         "a[data-item-id^='phone:'] .Io6YTe": 5,
+                         "a[data-item-id='authority']": 6},
+        }
+
+    page = Page(href("target"), transition)
+    page.state.update({
+        "address": "Shared address", "phone": "Shared phone",
+        "website": "https://shared.test",
+        "node_ids": {"button[data-item-id='address'] .Io6YTe": 1,
+                     "a[data-item-id^='phone:'] .Io6YTe": 2,
+                     "a[data-item-id='authority']": 3},
+    })
+    business = run(monkeypatch, page)
+    assert (business.address, business.phone, business.website) == (
+        "Shared address", "Shared phone", "https://shared.test"
+    )
+
+
+def test_transformed_url_can_contain_other_data_tokens(monkeypatch):
+    def transition(page):
+        valid_transition(page)
+        page.url = "https://www.google.com/maps/place/Cafe/data=!1sother!3m1!1starget!"
+
+    page = Page(href("target"), transition)
+    assert run(monkeypatch, page).address == "New address"
+
+
+def test_matching_panel_ignores_an_old_visible_panel(monkeypatch):
+    class VisiblePanel:
+        def __init__(self, title):
+            self.title = title
+
+        def is_visible(self):
+            return True
+
+        def locator(self, selector):
+            return self
+
+        @property
+        def last(self):
+            return self
+
+        def inner_text(self, timeout=None):
+            return self.title
+
+    class Panels:
+        def count(self):
+            return 2
+
+        def nth(self, index):
+            return [VisiblePanel("Old"), VisiblePanel("Cafe")][index]
+
+    class MultiPage:
+        def locator(self, selector):
+            return Panels()
+
+    panel = detail_panel._matching_panel(
+        MultiPage(), "div[role='main']", "h1", "Cafe", "Old", None
+    )
+    assert panel.title == "Cafe"
+
+
+def test_matching_panel_prefers_fresh_same_name_business(monkeypatch):
+    class VisiblePanel:
+        def __init__(self, text):
+            self.text = text
+
+        def is_visible(self):
+            return True
+
+        def locator(self, selector):
+            class Title:
+                @property
+                def last(self):
+                    return self
+
+                def inner_text(self, timeout=None):
+                    return "Cafe"
+
+            return Title()
+
+        @property
+        def last(self):
+            return self
+
+        def inner_text(self, timeout=None):
+            return self.text
+
+    class Panels:
+        def __init__(self):
+            self.items = [VisiblePanel("Cafe prior panel"), VisiblePanel("Cafe target panel")]
+
+        def count(self):
+            return len(self.items)
+
+        def nth(self, index):
+            return self.items[index]
+
+    class MultiPage:
+        def locator(self, selector):
+            return Panels()
+
+    panel = detail_panel._matching_panel(
+        MultiPage(), "div[role='main']", "h1", "Cafe", "Cafe prior panel", None
+    )
+    assert panel.text == "Cafe target panel"
+
+
+def test_failed_click_keeps_summary(monkeypatch):
+    page = Page(href("target"))
+    page.state["click_fails"] = True
+    business = run(monkeypatch, page)
+    assert business.address == "Summary address"
+
+
+def test_late_panel_transition_can_still_enrich(monkeypatch):
+    page = Page(href("target"), lambda current: None)
+
+    def later(current):
+        if current.clock >= 0.3:
+            valid_transition(current)
+            current.on_wait = lambda later_page: None
+
+    page.on_wait = later
+    business = run(monkeypatch, page)
+    assert business.address == "New address"
+
+
+def test_absent_optional_fields_do_not_consume_auto_waits(monkeypatch):
+    def transition(page):
+        page.url = f"https://www.google.com{page.target_href}"
+        page.state = {"title": "Cafe", "text": "Cafe detail", "address": None,
+                      "phone": None, "website": None}
+
+    page = Page(href("target"), transition)
+    business = run(monkeypatch, page)
+    assert business.address == "Summary address"
+    assert page.clock <= 0.2

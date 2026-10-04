@@ -223,3 +223,30 @@ def test_bounded_partial_feed_records_one_recoverable_issue(monkeypatch):
     assert [(issue.stage, issue.code) for issue in collector.items] == [
         ("feed", "partial_results")
     ]
+
+
+def test_verified_source_end_returns_available_without_stall_issue(monkeypatch):
+    page, run = collect(monkeypatch, [[card("A", "1")]], 100)
+    monkeypatch.setattr(result_list, "_verified_source_end", lambda current: current is page)
+    collector = IssueCollector()
+    assert names(run(collector)) == ["A"]
+    assert collector.items == []
+
+
+def test_verified_empty_is_distinct_from_ambiguous_zero(monkeypatch):
+    page, run = collect(monkeypatch, [[]], 100)
+    monkeypatch.setattr(result_list, "_verified_source_end", lambda current: current is page)
+    assert run() == []
+
+
+@pytest.mark.parametrize("available,expected", [(100, 100), (105, 100), (35, 35)])
+def test_100_candidate_policy_is_ordered_and_bounded_offline(
+    monkeypatch, available, expected
+):
+    batches = [[card(f"Cafe {index}", str(index)) for index in range(available)]]
+    page, run = collect(monkeypatch, batches, 100, idle=2)
+    results = run()
+    assert len(results) == expected
+    assert names(results) == [f"Cafe {index}" for index in range(expected)]
+    assert len({item["href"] for item in results}) == expected
+    assert page.wheels == (0 if available >= 100 else 2)

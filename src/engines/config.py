@@ -1,6 +1,9 @@
-"""Minimal extraction configuration; operational maximum remains unsettled."""
+"""Minimal extraction configuration and Google Maps limit policy."""
 
 from dataclasses import dataclass
+
+
+GOOGLE_MAPS_ENGINE_MAX_LIMIT = 100
 
 
 @dataclass(frozen=True)
@@ -26,20 +29,17 @@ def resolve_limit(
     *,
     engine_max_limit: int | None,
 ) -> int:
-    """Validate against an owner-supplied maximum; never silently clamp.
-
-    No production maximum is supplied here. The value awaits approval from
-    capacity evidence. Controlled tests may inject a numerical policy.
-    """
+    """Validate against the Engine policy; never silently clamp."""
     effective = config.limit if requested_limit is None else requested_limit
     if type(effective) is not int or effective <= 0:
         raise ValueError("requested limit must be a positive integer")
     if engine_max_limit is None:
-        raise RuntimeError("engine_max_limit policy has not been approved")
+        raise RuntimeError("engine maximum is unavailable")
     if type(engine_max_limit) is not int or engine_max_limit <= 0:
         raise ValueError("engine_max_limit must be a positive integer")
     if effective > engine_max_limit:
         raise ValueError(
-            f"requested limit {effective} exceeds engine maximum {engine_max_limit}"
+            f"requested limit {effective} exceeds engine maximum {engine_max_limit}; "
+            f"the maximum permitted limit is {engine_max_limit}"
         )
     return effective

@@ -1,10 +1,6 @@
-"""Reusable facade for the approved Google Maps extraction strategy.
+"""Reusable facade for the approved Google Maps extraction strategy."""
 
-The operational maximum still requires approval. Searches reject an unset
-maximum before any source I/O.
-"""
-
-from engines.config import EngineConfig, resolve_limit
+from engines.config import EngineConfig, GOOGLE_MAPS_ENGINE_MAX_LIMIT, resolve_limit
 from engines.errors import ProspectorConfigurationError, ProspectorSourceError
 from models.search_query import SearchQuery, Source
 from models.search_result import SearchResult
@@ -14,8 +10,8 @@ from scraper.google_maps.scraper import _run_google_maps
 class ProspectorEngine:
     """Reusable extraction entrypoint, independent of CLI and ExportService."""
 
-    # The owner must approve a value or equivalent determinable policy.
-    ENGINE_MAX_LIMIT: int | None = None
+    # Owner-approved operational policy; not a claim of universal capacity.
+    ENGINE_MAX_LIMIT = GOOGLE_MAPS_ENGINE_MAX_LIMIT
 
     def __init__(self, config: EngineConfig) -> None:
         if not isinstance(config, EngineConfig):

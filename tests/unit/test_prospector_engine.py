@@ -1,4 +1,4 @@
-"""Controlled facade checks without endorsing an Engine capacity value."""
+"""Controlled facade checks for the approved Google Maps policy."""
 
 import pytest
 
@@ -26,14 +26,26 @@ def test_facade_delegates_config_and_preserves_result(monkeypatch):
     })]
 
 
-def test_facade_rejects_unapproved_maximum_before_source_io(monkeypatch):
+@pytest.mark.parametrize("limit", [1, 50, 100])
+def test_facade_accepts_approved_limits(monkeypatch, limit):
+    query = SearchQuery(Source.GOOGLE_MAPS, "cafes", "Tijuana")
+    observed = []
+    monkeypatch.setattr(
+        prospector_engine, "_run_google_maps",
+        lambda *args, **kwargs: observed.append(args[1]) or SearchResult(query),
+    )
+    prospector_engine.ProspectorEngine(EngineConfig(limit=limit)).search(query)
+    assert observed == [limit]
+
+
+def test_facade_rejects_101_before_source_io(monkeypatch):
     query = SearchQuery(Source.GOOGLE_MAPS, "cafes", "Tijuana")
     monkeypatch.setattr(
         prospector_engine, "_run_google_maps",
         lambda *args, **kwargs: pytest.fail("source I/O before policy validation"),
     )
-    with pytest.raises(ProspectorConfigurationError, match="not been approved"):
-        prospector_engine.ProspectorEngine(EngineConfig()).search(query)
+    with pytest.raises(ProspectorConfigurationError, match="maximum permitted limit is 100"):
+        prospector_engine.ProspectorEngine(EngineConfig(limit=101)).search(query)
 
 
 def test_facade_rejects_over_maximum_without_clamping(monkeypatch):

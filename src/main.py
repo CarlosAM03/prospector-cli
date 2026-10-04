@@ -3,7 +3,7 @@ from models.search_query import (
     Source,
 )
 
-from engines.config import EngineConfig
+from engines.config import EngineConfig, GOOGLE_MAPS_ENGINE_MAX_LIMIT
 from engines.errors import ProspectorError
 from engines.prospector_engine import ProspectorEngine
 
@@ -149,9 +149,13 @@ def parse_requested_limit(raw: str) -> int:
     """Parse CLI input; Engine owns the separate maximum policy."""
     value = raw.strip()
     if not value:
-        return 100
+        return 50
     if not value.isdecimal() or int(value) <= 0:
         raise ValueError("Limit must be a positive whole number.")
+    if int(value) > GOOGLE_MAPS_ENGINE_MAX_LIMIT:
+        raise ValueError(
+            f"The maximum permitted limit is {GOOGLE_MAPS_ENGINE_MAX_LIMIT}."
+        )
     return int(value)
 
 
@@ -168,7 +172,7 @@ def execute_search() -> None:
     ).strip()
 
     limit_text = input(
-        "Limit (default 100) : "
+        "Limit (default 50, maximum 100) : "
     )
 
 

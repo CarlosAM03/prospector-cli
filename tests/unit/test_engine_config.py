@@ -1,8 +1,8 @@
-"""Controlled validation without inventing an operational maximum."""
+"""Controlled validation of the owner-approved Engine limit policy."""
 
 import pytest
 
-from engines.config import EngineConfig, resolve_limit
+from engines.config import EngineConfig, GOOGLE_MAPS_ENGINE_MAX_LIMIT, resolve_limit
 
 
 def test_defaults_and_explicit_configuration_are_immutable():
@@ -40,6 +40,15 @@ def test_over_maximum_is_explicitly_rejected_without_clamping():
         resolve_limit(EngineConfig(), 60, engine_max_limit=50)
 
 
-def test_unapproved_maximum_cannot_be_pretended_to_exist():
-    with pytest.raises(RuntimeError, match="not been approved"):
-        resolve_limit(EngineConfig(), engine_max_limit=None)
+@pytest.mark.parametrize("value", [1, 50, 100])
+def test_google_maps_approved_range(value):
+    assert resolve_limit(
+        EngineConfig(limit=value), engine_max_limit=GOOGLE_MAPS_ENGINE_MAX_LIMIT
+    ) == value
+
+
+def test_101_rejected_under_google_maps_policy():
+    with pytest.raises(ValueError, match="maximum permitted limit is 100"):
+        resolve_limit(
+            EngineConfig(limit=101), engine_max_limit=GOOGLE_MAPS_ENGINE_MAX_LIMIT
+        )

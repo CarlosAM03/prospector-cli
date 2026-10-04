@@ -1,6 +1,8 @@
 """Offline end-to-end candidate collection through recycled-card detail clicks."""
 
-from scraper.google_maps import detail_panel, result_list
+from types import SimpleNamespace
+
+from scraper.google_maps import detail_panel, result_list, website_enrichment
 
 
 def card(name, key):
@@ -8,6 +10,7 @@ def card(name, key):
         "aria-label": name,
         "href": f"/maps/place/{name}/data=!1s{key}!",
         "address": f"{name} address",
+        "website": f"https://{key}.test",
     }
 
 
@@ -38,6 +41,9 @@ class Panel:
     def locator(self, selector):
         return Field(self.page, selector)
 
+    def is_visible(self):
+        return True
+
 
 class Panels:
     def __init__(self, page):
@@ -45,6 +51,12 @@ class Panels:
 
     @property
     def last(self):
+        return Panel(self.page)
+
+    def count(self):
+        return 1
+
+    def nth(self, index):
         return Panel(self.page)
 
 
@@ -77,7 +89,7 @@ class Link:
             "text": self.data["aria-label"] + " new panel",
             "address": self.data["address"],
             "phone": None,
-            "website": None,
+            "website": self.data["website"],
         }
 
 
@@ -192,3 +204,30 @@ def test_failed_recovery_keeps_summary_and_does_not_click_wrong_card(monkeypatch
     assert [business.name for business in businesses] == ["A", "B"]
     assert businesses[0].address is None
     assert page.clicked == [records[1]["href"]]
+
+
+def test_recycled_feed_reaches_website_email_stage(monkeypatch):
+    page = setup(monkeypatch)
+    records = result_list.extract_businesses(page, 2)
+    businesses = enrich(page, records)
+    inspected = []
+
+    class WebsiteEngine:
+        def __init__(self, browser):
+            pass
+
+        def inspect(self, url):
+            inspected.append(url)
+            return SimpleNamespace(
+                title="Site", description="Description", language="en",
+                has_contact_page=False, has_about_page=False, status_code=200,
+                emails=["contact@example.test"],
+            )
+
+    monkeypatch.setattr(website_enrichment, "WebsiteEngine", WebsiteEngine)
+    website_enrichment.enrich_websites(None, businesses)
+    assert inspected == ["https://id_a.test", "https://id_b.test"]
+    assert [business.email for business in businesses] == [
+        "contact@example.test", "contact@example.test"
+    ]
+    assert [business.address for business in businesses] == ["A address", "B address"]
