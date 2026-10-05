@@ -17,6 +17,7 @@ from models.search_query import SearchQuery
 from models.search_result import SearchResult
 
 from .detail_panel import enrich_business
+from .parser import category_repeats_address
 from .result_list import extract_businesses
 from .search import create_search_page
 from .website_enrichment import enrich_websites
@@ -117,13 +118,14 @@ def _run_google_maps(
 def _enrich_businesses(page, results: list[dict], issue_collector=None) -> list[Business]:
     businesses: list[Business] = []
     for result in results:
-        businesses.append(
-            enrich_business(
-                page=page,
-                href=result["href"],
-                business=result["business"],
-                identity=result["identity"],
-                issue_collector=issue_collector,
-            )
+        business = enrich_business(
+            page=page,
+            href=result["href"],
+            business=result["business"],
+            identity=result["identity"],
+            issue_collector=issue_collector,
         )
+        if category_repeats_address(business.category, business.address):
+            business.category = None
+        businesses.append(business)
     return businesses

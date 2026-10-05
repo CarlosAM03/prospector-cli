@@ -149,3 +149,26 @@ def test_internal_pilot_metrics_do_not_change_result_contract(monkeypatch):
     assert all(metrics[key] >= 0 for key in (
         "navigation_seconds", "feed_seconds", "detail_seconds", "website_seconds"
     ))
+
+
+def test_address_fragment_category_is_cleared_without_changing_identity(monkeypatch):
+    first = record("Baja Border Maquila", "1")
+    first["business"].category = "C. Pacifico 9030"
+    first["business"].address = "C. Pacifico 9030, Parque Industrial Pacifico II"
+    second = record("Another factory", "2")
+    second["business"].category = "Fábrica"
+    second["business"].address = "C. 5 Sur 155, Tijuana"
+    third = record("Unknown address", "3")
+    third["business"].category = "Avenida Universidad 102"
+    browser, query = setup(monkeypatch, [first, second, third])
+
+    result = scraper.search_businesses(query, 3)
+
+    assert [business.name for business in result.businesses] == [
+        "Baja Border Maquila", "Another factory", "Unknown address"
+    ]
+    assert [business.category for business in result.businesses] == [
+        None, "Fábrica", "Avenida Universidad 102"
+    ]
+    assert result.total_found == 3
+    assert browser.closes == 1

@@ -49,7 +49,7 @@ This is not formal page pagination. `limit` bounds Businesses processed/returned
 
 ## Summary extraction
 
-The first pass parses available name, category, address, phone and Maps href data into ordered `Business` objects. Invalid early cards do not consume the positive Business limit. Repeated source hrefs are skipped to avoid processing recycled cards, while distinct same-name Businesses remain separate. On a bounded feed stall, already valid Businesses are returned with an issue; if none exist and no verified terminal state exists, the search fails as indeterminate. A verified source end would return available Businesses without a stall issue, but no reliable live marker has been established. The pipeline does not claim complete source coverage. The legacy `limit <= 0` path still navigates/resolves the feed and returns zero Businesses when that path succeeds. Known parser mojibake is technical debt, not a desired contract.
+The first pass parses available name, category, address, phone and Maps href data into ordered `Business` objects. Invalid early cards do not consume the positive Business limit. Repeated source hrefs are skipped to avoid processing recycled cards, while distinct same-name Businesses remain separate. When an available address for the same Business shows that a numeric summary category exactly repeated its first address segment, that category is cleared; otherwise ambiguous source text is retained. On a bounded feed stall, already valid Businesses are returned with an issue; if none exist and no verified terminal state exists, the search fails as indeterminate. A verified source end would return available Businesses without a stall issue, but no reliable live marker has been established. The pipeline does not claim complete source coverage. The legacy `limit <= 0` path still navigates/resolves the feed and returns zero Businesses when that path succeeds. Known parser mojibake is technical debt, not a desired contract.
 
 ## Detail enrichment
 
@@ -59,11 +59,11 @@ The identity-first enrichment design exists to avoid associating a later panel s
 
 ## Website enrichment
 
-When a website is available, the scraper delegates inspection to Website Engine. Status/final URL, title, description, language and email metadata may be added. Website failure preserves the Business and adds a recoverable `SearchIssue`.
+When a website is available, the scraper delegates inspection to Website Engine. Status/final URL, title, description, language and email metadata may be added. Percent-encoded `mailto:` URLs are decoded before email extraction; arbitrary source text is not rewritten into guessed addresses. Website failure preserves the Business and adds a recoverable `SearchIssue`.
 
 ## Runtime variability and debt
 
-Live execution is externally variable. Controlled offline tests cover state, progress, identity, optional enrichment, 100-candidate collection and runtime cleanup. In the single authorized C05 pilot, requests for 3 and 10 Businesses returned that many summaries, but all detail attempts remained unverified; a 25-Business request reached the hard 180-second process timeout and stopped the pilot. This repair was not run live. The owner subsequently approved 100 as an operational Engine policy based on historical use, without claiming certified capacity or a reliable empty-state marker. Browser lifecycle belongs to `BrowserRuntime`; Engine fatal boundaries use typed exceptions, while the legacy wrapper retains historical behavior.
+Live execution is externally variable. Controlled offline tests cover state, progress, identity, optional enrichment, 100-candidate collection and runtime cleanup. In the single authorized C05 pilot, requests for 3 and 10 Businesses returned that many summaries, but all detail attempts remained unverified; a 25-Business request reached the hard 180-second process timeout and stopped the pilot. After the corrective refactor, the owner completed manual searches and exports at limits 75 and 50 with recoverable issues. Those runs demonstrate an operational pipeline for the observed queries, without certifying capacity at 100 or a reliable empty-state marker. Browser lifecycle belongs to `BrowserRuntime`; Engine fatal boundaries use typed exceptions, while the legacy wrapper retains historical behavior.
 
 ## Target — TARGET_V0_7_X / TARGET_V1_0
 

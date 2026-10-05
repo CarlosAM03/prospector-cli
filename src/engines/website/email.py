@@ -25,6 +25,7 @@ It operates exclusively on parsed website data.
 """
 
 import re
+from urllib.parse import unquote
 
 
 EMAIL_PATTERN = re.compile(
@@ -67,7 +68,10 @@ class EmailExtractor:
         )
 
         self._collect(
-            parsed.get("links", []),
+            [
+                unquote(link) if link.lower().startswith("mailto:") else link
+                for link in parsed.get("links", [])
+            ],
             emails,
         )
 

@@ -74,6 +74,16 @@ def test_email_extractor_normalizes_deduplicates_and_sorts():
     assert EmailExtractor().extract(parsed) == ["info@example.test", "support@example.test"]
 
 
+def test_percent_encoded_mailto_does_not_leak_url_escape_into_email():
+    parsed = WebsiteParser().parse(WebsiteDocument(
+        "https://example.test",
+        '<html><body><a href="mailto:%20sales@ana-global.com">Contact</a></body></html>',
+        200,
+    ))
+    assert parsed["links"] == ["mailto:%20sales@ana-global.com"]
+    assert EmailExtractor().extract(parsed) == ["sales@ana-global.com"]
+
+
 def test_website_extractor_composes_metadata_language_and_email():
     parsed = WebsiteParser().parse(WebsiteDocument("https://example.test", HTML, 200))
 

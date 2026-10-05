@@ -96,7 +96,7 @@ Google Maps is the only implemented/supported prospect source today. The abstrac
 
 ## Current technical debt — TECHNICAL_DEBT
 
-Remaining technical debt includes source-specific selector/URL assumptions, incomplete contact/about/content type metadata and live detail identity validation. The earlier C05 pilot returned 3 and 10 Businesses with summary data only; a 25 request hit its 180-second hard timeout. This repair has offline coverage but no new live verification. The approved maximum of 100 is an owner policy informed by historical use, not a capacity certification. Reusable components use module loggers without setting global logging policy; CLI presentation remains in `main.py`.
+Remaining technical debt includes source-specific selector/URL assumptions, incomplete contact/about/content type metadata and unverified source-end detection. The earlier C05 pilot returned 3 and 10 Businesses with summary data only; a 25 request hit its 180-second hard timeout. After the corrective refactor, the owner completed two manual searches and exports at limits 75 and 50. Those searches demonstrate operation for their queries, not a certified capacity or catalog completeness. The approved maximum of 100 remains an owner policy. Reusable components use module loggers without setting global logging policy; CLI presentation remains in `main.py`.
 
 ## Approved target architecture — TARGET_V0_7_X / TARGET_V1_0
 
@@ -114,7 +114,7 @@ CLI adapter       other Python consumer / future API
                                     CSV      XLSX
 ```
 
-The target means the Engine owns reusable prospecting orchestration; the CLI owns input/presentation; and `ExportService` consumes `SearchResult` without belonging inside extraction core. These boundaries, the approved Error Model and the approved maximum policy are implemented. `output_path` remains outside EngineConfig. Live acceptance of the repaired route remains pending.
+The target means the Engine owns reusable prospecting orchestration; the CLI owns input/presentation; and `ExportService` consumes `SearchResult` without belonging inside extraction core. These boundaries, the approved Error Model and the approved maximum policy are implemented. `output_path` remains outside EngineConfig. Owner acceptance of the v0.7.x line remains a separate decision after this engineering audit.
 
 ## Version boundaries
 

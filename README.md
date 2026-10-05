@@ -115,7 +115,7 @@ CLI adapter -> ProspectorEngine(config) -> extraction pipeline -> SearchResult
                                                         +-> ExportService -> CSV/XLSX
 ```
 
-`EngineConfig` and `ProspectorEngine` are integrated with the CLI under the owner-approved Google Maps maximum of 100. The wrapper remains the legacy programmatic path. Offline tests cover the repaired feed/detail/website flow; live behavior awaits manual smoke acceptance. Formal normalization, multi-input, deduplication and merge remain future work. Physical extraction into a separately packaged Engine is a post-v1 possibility, not a prerequisite for `v1.0.0`.
+`EngineConfig` and `ProspectorEngine` are integrated with the CLI under the owner-approved Google Maps maximum of 100. The wrapper remains the legacy programmatic path. Offline tests cover the feed/detail/website flow. The owner completed two manual CLI searches and CSV/XLSX exports at limits 75 and 50; these demonstrate operation for those queries, not catalog completeness or universal reliability. Formal normalization, multi-input, deduplication and merge remain future work. Physical extraction into a separately packaged Engine is a post-v1 possibility, not a prerequisite for `v1.0.0`.
 
 ## Project evolution
 

@@ -51,13 +51,13 @@ Google Maps results are loaded through a virtual/infinite feed with source-speci
 
 ### Enrichment and result
 
-The detail stage requires a confirmed click, exact source place ID in the resulting URL and an equivalent title in the matching visible panel before applying available data. It keeps summaries if identity remains uncertain. Optional field reads avoid long waits for absent fields; a newly rendered field can legitimately share a previous Business's value. Website Engine may add basic status/final URL, title, description, language and email data; inspection failure adds a recoverable issue without removing Maps data. A bounded feed stall with valid Businesses adds an issue. A verified source end would not; no reliable live end marker is currently established.
+The detail stage requires a confirmed click, exact source place ID in the resulting URL and an equivalent title in the matching visible panel before applying available data. It keeps summaries if identity remains uncertain. Optional field reads avoid long waits for absent fields; a newly rendered field can legitimately share a previous Business's value. A numeric summary category that exactly repeats the available address's first segment is cleared as a source parsing artifact. Website Engine may add basic status/final URL, title, description, language and email data; percent-encoded `mailto:` links are decoded before email extraction. Inspection failure adds a recoverable issue without removing Maps data. A bounded feed stall with valid Businesses adds an issue. A verified source end would not; no reliable live end marker is currently established.
 
 `SearchResult` preserves query, ordered Businesses, `total_found` and execution time. Export is a subsequent operation through reusable `ExportService`.
 
 ## Not current
 
-The source does not implement general configuration profiles, a Query Builder, formal normalization, business deduplication or multi-input. `EngineConfig`, module logging, the public Error Model and a CLI-connected `ProspectorEngine` exist. The owner-approved Google Maps maximum is 100. The repaired route is covered offline and awaits manual live acceptance.
+The source does not implement general configuration profiles, a Query Builder, formal normalization, business deduplication or multi-input. `EngineConfig`, module logging, the public Error Model and a CLI-connected `ProspectorEngine` exist. The owner-approved Google Maps maximum is 100. Two owner-run CLI searches and exports demonstrated operation for the observed queries; final version acceptance remains separate.
 
 ## Approved target — TARGET_V0_7_X / TARGET_V1_0
 

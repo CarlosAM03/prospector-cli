@@ -11,7 +11,7 @@ Use these distinctions when reviewing a change:
 - `TARGET_V0_7_X`, `TARGET_V0_8`, `TARGET_V0_9`, `TARGET_V1_0`: future scope;
 - `DEFERRED_DESIGN`: approved problem whose exact technical contract is not selected yet.
 
-`EngineConfig`, `ProspectorEngine` and the approved public Error Model are present under the v0.7.x plan. The owner-approved Google Maps Engine maximum is 100 and the CLI default is 50; changes to that policy need explicit approval. The corrected route is awaiting manual smoke acceptance. Do not implement normalization or deduplication merely because they appear in target documentation.
+`EngineConfig`, `ProspectorEngine` and the approved public Error Model are present under the v0.7.x plan. The owner-approved Google Maps Engine maximum is 100 and the CLI default is 50; changes to that policy need explicit approval. Two owner-run manual searches and exports demonstrated the corrected route for their queries; final version acceptance remains an owner decision. Do not implement normalization or deduplication merely because they appear in target documentation.
 
 ## Project Philosophy
 
