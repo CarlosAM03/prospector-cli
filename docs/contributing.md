@@ -8,10 +8,10 @@ Use these distinctions when reviewing a change:
 
 - `CURRENT`: implemented behavior;
 - `TECHNICAL_DEBT`: known implementation detail that should not become a desired contract;
-- `TARGET_V0_7_X`, `TARGET_V0_8`, `TARGET_V0_9`, `TARGET_V1_0`: future scope;
+- `TARGET_V0_8`, `TARGET_V0_9`, `TARGET_V1_0`: future scope;
 - `DEFERRED_DESIGN`: approved problem whose exact technical contract is not selected yet.
 
-`EngineConfig`, `ProspectorEngine` and the approved public Error Model are present under the v0.7.x plan. The owner-approved Google Maps Engine maximum is 100 and the CLI default is 50; changes to that policy need explicit approval. Two owner-run manual searches and exports demonstrated the corrected route for their queries; final version acceptance remains an owner decision. Do not implement normalization or deduplication merely because they appear in target documentation.
+`EngineConfig`, `ProspectorEngine` and the approved public Error Model are present under the accepted v0.7.x technical baseline at `ee6b69e`. The owner-approved Google Maps Engine maximum is 100 and the CLI default is 50; changes to that policy need explicit approval. Two owner-run manual searches and exports demonstrated the corrected route for their queries. Formal v0.8.0 design is still pending: do not implement normalization or deduplication merely because they appear in target documentation.
 
 ## Project Philosophy
 

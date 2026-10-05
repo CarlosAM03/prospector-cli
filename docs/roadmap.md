@@ -24,9 +24,9 @@ These are historical milestones and architectural context. Some old objective wo
 
 Phase 0 — baseline audit, Phase 1 — regression safety, and controlled Google Maps hardening are complete in source. The permanent suite has deterministic unit tests, controlled integration tests and an opt-in live Google Maps E2E check. The default suite remains offline. A separately authorized C05 pilot ran three of eight planned combinations and stopped at the 180-second hard timeout on the third.
 
-The application remains a CLI-first Google Maps pipeline with Website Engine enrichment and CSV/XLSX export. `BrowserRuntime` owns per-search resources; `SearchResult.issues` and typed fatal errors are implemented. The CLI calls `ProspectorEngine` with an optional requested limit defaulting to 50 and rejects values above the owner-approved Google Maps maximum of 100 before browser access. The legacy wrapper remains available without that new cap. The earlier C05 pilot exposed detail problems; later corrections have deterministic offline coverage. The owner subsequently completed manual CLI searches and exports at limits 75 and 50. These demonstrate operation for those queries, not full-pipeline capacity at 100 or source catalog completeness. Final line acceptance remains with the owner.
+The application remains a CLI-first Google Maps pipeline with Website Engine enrichment and CSV/XLSX export. `BrowserRuntime` owns per-search resources; `SearchResult.issues` and typed fatal errors are implemented. The CLI calls `ProspectorEngine` with an optional requested limit defaulting to 50 and rejects values above the owner-approved Google Maps maximum of 100 before browser access. The legacy wrapper remains available without that new cap. The earlier C05 pilot exposed detail problems; later corrections have deterministic offline coverage. The owner subsequently completed manual CLI searches and exports at limits 75 and 50. These demonstrate operation for those queries, not full-pipeline capacity at 100 or source catalog completeness. Commit `ee6b69e` closes the accepted technical baseline of v0.7.x and is the starting point for formal v0.8.0 design; no v0.8.0 implementation or release tag is claimed.
 
-## v0.7.x — TARGET_V0_7_X
+## v0.7.x — CURRENT ACCEPTED BASELINE
 
 The stabilization line covers:
 
