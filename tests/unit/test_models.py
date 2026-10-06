@@ -3,6 +3,7 @@ from dataclasses import FrozenInstanceError
 import pytest
 
 from models.business import Business
+from models.normalized_business import NormalizedBusiness
 from models.search_query import SearchQuery, Source
 from models.search_result import SearchResult
 from models.search_issue import SearchIssue
@@ -12,15 +13,21 @@ from models.website_metadata import WebsiteMetadata
 
 def test_search_result_total_found_matches_business_count():
     query = SearchQuery(Source.GOOGLE_MAPS, "cafes", "Tijuana")
-    result = SearchResult(query=query, businesses=[Business("A"), Business("B")])
+    result = SearchResult(
+        query=query, businesses=[NormalizedBusiness("A"), NormalizedBusiness("B")],
+        original_businesses=[Business("A"), Business("B")],
+    )
 
     assert result.total_found == 2
 
 
 def test_search_result_preserves_query_and_business_order():
     query = SearchQuery(Source.GOOGLE_MAPS, "cafes", "Tijuana")
-    businesses = [Business("A"), Business("B")]
-    result = SearchResult(query=query, businesses=businesses)
+    businesses = [NormalizedBusiness("A"), NormalizedBusiness("B")]
+    result = SearchResult(
+        query=query, businesses=businesses,
+        original_businesses=[Business("A"), Business("B")],
+    )
 
     assert result.query is query
     assert result.businesses == businesses
@@ -45,7 +52,7 @@ def test_default_lists_are_independent_between_instances():
     first_metadata = WebsiteMetadata()
     second_metadata = WebsiteMetadata()
 
-    first_result.businesses.append(Business("A"))
+    first_result.businesses.append(NormalizedBusiness("A"))
     first_result.issues.append(SearchIssue("feed", "partial_results", "Safe."))
     first_metadata.emails.append("a@example.test")
 
@@ -56,7 +63,10 @@ def test_default_lists_are_independent_between_instances():
 
 def test_legacy_positional_search_result_and_public_issue_order():
     query = SearchQuery(Source.GOOGLE_MAPS, "cafes", "Tijuana")
-    result = SearchResult(query, [Business("A")], 1.25)
+    result = SearchResult(
+        query, [NormalizedBusiness("A")], 1.25,
+        original_businesses=[Business("A")],
+    )
     assert result.issues == [] and result.total_found == 1
     first = SearchIssue("detail", "identity_unverifiable", "Safe detail message")
     second = SearchIssue("website", "inspection_unavailable", "Safe website message")

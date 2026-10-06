@@ -3,8 +3,11 @@
 import pytest
 
 from models.search_issue import SearchIssue
+from models.business import Business
+from models.normalized_business import NormalizedBusiness
 from models.search_query import SearchQuery, Source
 from models.search_result import SearchResult
+from scraper.google_maps.scraper import _SourceResult
 from scraper.google_maps import scraper
 import main as cli
 
@@ -65,7 +68,7 @@ def test_legacy_wrapper_keeps_programmatic_default_and_unclamped_value(monkeypat
     observed = []
     monkeypatch.setattr(
         scraper, "_run_google_maps",
-        lambda *args, **kwargs: observed.append((args, kwargs)) or SearchResult(query),
+        lambda *args, **kwargs: observed.append((args, kwargs)) or _SourceResult(query),
     )
     scraper.search_businesses(query)
     scraper.search_businesses(query, 0)
@@ -73,3 +76,41 @@ def test_legacy_wrapper_keeps_programmatic_default_and_unclamped_value(monkeypat
     assert all(kwargs == {
         "headless": False, "website_enrichment": True
     } for _, kwargs in observed)
+
+
+def test_cli_displays_normalized_view_and_safe_issue_context(monkeypatch, capsys):
+    answers = iter(["cafes", "Tijuana", "", "3"])
+    monkeypatch.setattr("builtins.input", lambda prompt="": next(answers))
+
+    class FakeEngine:
+        def __init__(self, config):
+            assert config.limit == 50
+
+        def search(self, query):
+            return SearchResult(
+                query,
+                businesses=[NormalizedBusiness(
+                    name="CAFE RÍO", category="CAFÉ",
+                    address="Av. Río 1", phone="664 123 4567",
+                    email="info@example.test",
+                    website="https://Example.test/Path", language="ES-MX",
+                )],
+                original_businesses=[Business(
+                    name="Cafe Río", category="Café", phone="(664) 123-4567",
+                )],
+                issues=[SearchIssue(
+                    "normalization", "field_unverifiable",
+                    "A business field could not be normalized safely; its original value was preserved.",
+                    candidate="business[0].phone",
+                )],
+            )
+
+    monkeypatch.setattr(cli, "ProspectorEngine", FakeEngine)
+    cli.execute_search()
+    output = capsys.readouterr().out
+    assert "[1] CAFE RÍO" in output
+    assert "Category : CAFÉ" in output
+    assert "Phone    : 664 123 4567" in output
+    assert "Language : ES-MX" in output
+    assert "normalization/field_unverifiable (business[0].phone)" in output
+    assert "(664) 123-4567" not in output

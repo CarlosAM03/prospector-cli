@@ -8,7 +8,7 @@ class ExcelExporter(Exporter):
     """
     Excel exporter.
 
-    Converts a SearchResult containing enriched Business
+    Converts a SearchResult containing normalized businesses
     objects into an XLSX spreadsheet.
 
     The exporter does not perform:

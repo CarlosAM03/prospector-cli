@@ -3,6 +3,7 @@
 import pytest
 
 from engines import prospector_engine
+from scraper.google_maps.scraper import _SourceResult
 from engines.config import EngineConfig
 from engines.errors import ProspectorConfigurationError, ProspectorSourceError
 from models.search_query import SearchQuery, Source
@@ -11,7 +12,7 @@ from models.search_result import SearchResult
 
 def test_facade_delegates_config_and_preserves_result(monkeypatch):
     query = SearchQuery(Source.GOOGLE_MAPS, "cafes", "Tijuana")
-    expected = SearchResult(query)
+    expected = _SourceResult(query)
     calls = []
     monkeypatch.setattr(prospector_engine.ProspectorEngine, "ENGINE_MAX_LIMIT", 8)
     monkeypatch.setattr(
@@ -20,7 +21,9 @@ def test_facade_delegates_config_and_preserves_result(monkeypatch):
     )
     config = EngineConfig(limit=7, headless=True, website_enrichment=False)
     actual = prospector_engine.ProspectorEngine(config).search(query)
-    assert actual is expected
+    assert actual is not expected
+    assert actual.query is query
+    assert actual.businesses == actual.original_businesses == []
     assert calls == [((query, 7), {
         "headless": True, "website_enrichment": False, "typed_errors": True,
     })]
@@ -32,7 +35,7 @@ def test_facade_accepts_approved_limits(monkeypatch, limit):
     observed = []
     monkeypatch.setattr(
         prospector_engine, "_run_google_maps",
-        lambda *args, **kwargs: observed.append(args[1]) or SearchResult(query),
+        lambda *args, **kwargs: observed.append(args[1]) or _SourceResult(query),
     )
     prospector_engine.ProspectorEngine(EngineConfig(limit=limit)).search(query)
     assert observed == [limit]

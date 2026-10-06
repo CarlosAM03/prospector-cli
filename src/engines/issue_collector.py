@@ -18,6 +18,10 @@ _MESSAGES = {
         "Website enrichment was unavailable; existing business data was preserved.",
     ("feed", "partial_results"):
         "The result feed stopped before the requested limit; available businesses were preserved.",
+    ("normalization", "field_unverifiable"):
+        "A business field could not be normalized safely; its original value was preserved.",
+    ("normalization", "field_unavailable"):
+        "A controlled normalization operation was unavailable; its original value was preserved.",
 }
 
 

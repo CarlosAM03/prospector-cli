@@ -13,7 +13,9 @@ CLI input
   -> summary extraction into Business objects
   -> detail-panel enrichment
   -> optional Website Engine enrichment
-  -> SearchResult
+  -> consolidated original Business[]
+  -> mandatory global normalization
+  -> SearchResult with NormalizedBusiness[] and original Business[]
   -> CSV or XLSX export through ExportService
 ```
 
@@ -24,6 +26,8 @@ search_businesses(query: SearchQuery, limit: int = 50) -> SearchResult
 ```
 
 This wrapper remains transitional and preserves its default of 50, including the legacy nonpositive-limit behavior and requests above 100. The CLI calls `ProspectorEngine` with an optional limit: Enter selects 50, and valid requests are 1 through 100. The owner approved 100 as the Google Maps Engine maximum; larger or invalid requests are rejected before Chromium starts, without clamping. This operational policy is not a statistical guarantee of capacity.
+
+Both supported search entrypoints normalize after source enrichment. `result.businesses` contains independent `NormalizedBusiness` objects; `result.original_businesses` retains the consolidated `Business` objects in matching order. `result.total_found` counts extracted businesses, and `result.issues` includes source and recoverable normalization issues. The CLI displays and exports the normalized view. Normalization is local and deterministic; no live Google Maps acceptance has been performed for this version.
 
 Businesses may remain partially enriched when detail-panel or website inspection cannot provide every field. Website inspection currently covers basic status/final URL, title, description, language and email extraction. Contact/about detection and effective `content_type` output remain incomplete.
 
@@ -44,7 +48,7 @@ The project is guided by:
 - extensibility for future source strategies;
 - configuration over hardcoded execution behavior as the architecture evolves.
 
-Some of that direction is already represented by current modules; some is the target toward `v1.0.0`. Formal normalization, validation, deduplication and configuration profiles must not be inferred from this design description as currently implemented.
+Some of that direction is already represented by current modules; some is the target toward `v1.0.0`. Formal normalization is implemented in the local v0.8.x worktree; validation, deduplication and configuration profiles remain future work.
 
 ## Installation
 
@@ -110,12 +114,12 @@ See `tests/README.md` and `docs/contributing.md` for the test policy and contrib
 The approved target is:
 
 ```text
-CLI adapter -> ProspectorEngine(config) -> extraction pipeline -> SearchResult
-                                                        |
-                                                        +-> ExportService -> CSV/XLSX
+CLI adapter -> ProspectorEngine(config) -> extraction -> normalization -> SearchResult
+                                                                     | normalized + original
+                                                                     +-> ExportService -> CSV/XLSX
 ```
 
-`EngineConfig` and `ProspectorEngine` are integrated with the CLI under the owner-approved Google Maps maximum of 100. The wrapper remains the legacy programmatic path. Offline tests cover the feed/detail/website flow. The owner completed two manual CLI searches and CSV/XLSX exports at limits 75 and 50; these demonstrate operation for those queries, not catalog completeness or universal reliability. Formal normalization, multi-input, deduplication and merge remain future work. Physical extraction into a separately packaged Engine is a post-v1 possibility, not a prerequisite for `v1.0.0`.
+`EngineConfig` and `ProspectorEngine` are integrated with the CLI under the owner-approved Google Maps maximum of 100. The wrapper remains the legacy programmatic path with the same mandatory normalization stage. Offline tests cover the feed/detail/website flow and both normalized result routes. The owner completed two manual CLI searches and CSV/XLSX exports at limits 75 and 50 on the v0.7.x baseline; these demonstrate operation for those queries, not v0.8.x live acceptance, catalog completeness or universal reliability. Multi-input, deduplication and merge remain future work. Physical extraction into a separately packaged Engine is a post-v1 possibility, not a prerequisite for `v1.0.0`.
 
 ## Project evolution
 

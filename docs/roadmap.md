@@ -1,6 +1,6 @@
 # Roadmap
 
-This roadmap distinguishes historical milestones, current capabilities and future targets. The remaining stabilization work is intentionally described at the `v0.7.x` line level; patch-version decomposition is deferred.
+This roadmap distinguishes historical milestones, capabilities verified in the local worktree and future targets. v0.8.x implementation is ready for owner acceptance, not yet accepted or released.
 
 ## Historical milestones — HISTORICAL
 
@@ -24,7 +24,7 @@ These are historical milestones and architectural context. Some old objective wo
 
 Phase 0 — baseline audit, Phase 1 — regression safety, and controlled Google Maps hardening are complete in source. The permanent suite has deterministic unit tests, controlled integration tests and an opt-in live Google Maps E2E check. The default suite remains offline. A separately authorized C05 pilot ran three of eight planned combinations and stopped at the 180-second hard timeout on the third.
 
-The application remains a CLI-first Google Maps pipeline with Website Engine enrichment and CSV/XLSX export. `BrowserRuntime` owns per-search resources; `SearchResult.issues` and typed fatal errors are implemented. The CLI calls `ProspectorEngine` with an optional requested limit defaulting to 50 and rejects values above the owner-approved Google Maps maximum of 100 before browser access. The legacy wrapper remains available without that new cap. The earlier C05 pilot exposed detail problems; later corrections have deterministic offline coverage. The owner subsequently completed manual CLI searches and exports at limits 75 and 50. These demonstrate operation for those queries, not full-pipeline capacity at 100 or source catalog completeness. Commit `ee6b69e` closes the accepted technical baseline of v0.7.x and is the starting point for formal v0.8.0 design; no v0.8.0 implementation or release tag is claimed.
+The application remains a CLI-first Google Maps pipeline with Website Engine enrichment and CSV/XLSX export. `BrowserRuntime` owns per-search resources; `SearchResult.issues` and typed fatal errors are implemented. The CLI calls `ProspectorEngine` with an optional requested limit defaulting to 50 and rejects values above the owner-approved Google Maps maximum of 100 before browser access. The legacy wrapper remains available without that new cap. Both paths now pass through the shared normalization stage and expose normalized plus original results. The earlier C05 pilot exposed detail problems; later corrections have deterministic offline coverage. The owner subsequently completed manual CLI searches and exports at limits 75 and 50 on the v0.7.x baseline. These do not establish v0.8.x live acceptance, full-pipeline capacity at 100 or source catalog completeness. Commit `ee6b69e` remains the accepted v0.7.x functional baseline; no v0.8.x release tag is claimed.
 
 ## v0.7.x — CURRENT ACCEPTED BASELINE
 
@@ -40,9 +40,9 @@ The stabilization line covers:
 
 The approved Master Plan defines the patch sequence; this roadmap records only verified current behavior and line-level targets.
 
-## v0.8.x — TARGET_V0_8
+## v0.8.x — CURRENT / OWNER ACCEPTANCE PENDING
 
-One primary concern: formal deterministic normalization after extraction/enrichment. Deduplication is not part of this boundary.
+The local worktree implements deterministic, mandatory normalization after extraction/enrichment. `SearchResult` exposes independent normalized and consolidated original views. CLI and CSV/XLSX consume normalized values. The offline regression is the implementation evidence; owner manual acceptance remains N31. Deduplication is outside this boundary.
 
 ## v0.9.x — TARGET_V0_9
 

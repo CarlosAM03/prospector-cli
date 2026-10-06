@@ -2,6 +2,7 @@
 
 from engines.config import EngineConfig, GOOGLE_MAPS_ENGINE_MAX_LIMIT, resolve_limit
 from engines.errors import ProspectorConfigurationError, ProspectorSourceError
+from engines.global_pipeline import execute_global_search
 from models.search_query import SearchQuery, Source
 from models.search_result import SearchResult
 from scraper.google_maps.scraper import _run_google_maps
@@ -29,8 +30,8 @@ class ProspectorEngine:
             )
         except (ValueError, RuntimeError) as error:
             raise ProspectorConfigurationError(str(error)) from error
-        return _run_google_maps(
-            query, limit,
+        return execute_global_search(
+            _run_google_maps, query, limit,
             headless=self.config.headless,
             website_enrichment=self.config.website_enrichment,
             typed_errors=True,

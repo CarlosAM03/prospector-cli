@@ -5,6 +5,7 @@ import csv
 import pytest
 
 from models.business import Business
+from models.normalized_business import NormalizedBusiness
 from engines.issue_collector import IssueCollector
 from models.search_query import SearchQuery, Source
 from models.search_issue import SearchIssue
@@ -74,7 +75,9 @@ def test_t_i01_fatal_navigation_closes_and_optional_partial_survives(monkeypatch
 
     browser, query = setup(monkeypatch, [record("Cafe", "1")])
     result = scraper.search_businesses(query, 2)
-    assert result.businesses[0].name == "Cafe" and browser.closes == 1
+    assert isinstance(result.businesses[0], NormalizedBusiness)
+    assert result.businesses[0].name == "CAFE" and browser.closes == 1
+    assert result.original_businesses[0].name == "Cafe"
 
 
 def test_t_i02_order_limit_query_and_total_found(monkeypatch):
@@ -82,6 +85,7 @@ def test_t_i02_order_limit_query_and_total_found(monkeypatch):
     result = scraper.search_businesses(query, 2)
     assert result.query is query
     assert [b.name for b in result.businesses] == ["A", "B"]
+    assert [b.name for b in result.original_businesses] == ["A", "B"]
     assert result.total_found == 2 and result.execution_time >= 0
     assert browser.closes == 1
 
@@ -165,10 +169,13 @@ def test_address_fragment_category_is_cleared_without_changing_identity(monkeypa
     result = scraper.search_businesses(query, 3)
 
     assert [business.name for business in result.businesses] == [
-        "Baja Border Maquila", "Another factory", "Unknown address"
+        "BAJA BORDER MAQUILA", "ANOTHER FACTORY", "UNKNOWN ADDRESS"
     ]
     assert [business.category for business in result.businesses] == [
-        None, "Fábrica", "Avenida Universidad 102"
+        None, "FÁBRICA", "AVENIDA UNIVERSIDAD 102"
+    ]
+    assert [business.name for business in result.original_businesses] == [
+        "Baja Border Maquila", "Another factory", "Unknown address"
     ]
     assert result.total_found == 3
     assert browser.closes == 1

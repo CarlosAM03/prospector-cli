@@ -8,7 +8,7 @@ class CsvExporter(Exporter):
     """
     CSV exporter.
 
-    Converts a SearchResult containing enriched Business
+    Converts a SearchResult containing normalized businesses
     objects into a structured CSV file.
 
     The exporter does not perform:

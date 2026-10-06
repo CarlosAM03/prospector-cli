@@ -1,6 +1,7 @@
 """Current three-pass Google Maps extraction entrypoint."""
 
 import time
+from dataclasses import dataclass, field
 
 from engines.browser_runtime import BrowserRuntime
 from engines.errors import (
@@ -14,6 +15,7 @@ from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
 from models.business import Business
 from models.search_query import SearchQuery
+from models.search_issue import SearchIssue
 from models.search_result import SearchResult
 
 from .detail_panel import enrich_business
@@ -23,9 +25,28 @@ from .search import create_search_page
 from .website_enrichment import enrich_websites
 
 
+@dataclass
+class _SourceResult:
+    """Consolidated Google Maps output before the global result is assembled."""
+
+    query: SearchQuery
+    businesses: list[Business] = field(default_factory=list)
+    execution_time: float = 0.0
+    issues: list[SearchIssue] = field(default_factory=list)
+
+    @property
+    def total_found(self) -> int:
+        return len(self.businesses)
+
+
 def search_businesses(query: SearchQuery, limit: int = 50) -> SearchResult:
-    """Transitional boundary with its historical defaults and inputs."""
-    return _run_google_maps(query, limit, headless=False, website_enrichment=True)
+    """Legacy inputs with the mandatory shared global normalization stage."""
+    from engines.global_pipeline import execute_global_search
+
+    return execute_global_search(
+        _run_google_maps, query, limit,
+        headless=False, website_enrichment=True,
+    )
 
 
 def _run_google_maps(
@@ -37,7 +58,7 @@ def _run_google_maps(
     issue_collector=None,
     typed_errors: bool = False,
     metrics_sink: dict | None = None,
-) -> SearchResult:
+) -> _SourceResult:
     """Single source pipeline supplied with execution settings."""
     start_time = time.perf_counter()
     collector = issue_collector if issue_collector is not None else IssueCollector()
@@ -107,7 +128,7 @@ def _run_google_maps(
                 "The browser runtime could not complete the search."
             ) from error
         raise
-    return SearchResult(
+    return _SourceResult(
         query=query,
         businesses=businesses,
         execution_time=time.perf_counter() - start_time,

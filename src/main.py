@@ -219,7 +219,11 @@ def execute_search() -> None:
     )
 
     for issue in result.issues:
-        print(f"  {issue.stage}/{issue.code}: {issue.message}")
+        context = (
+            f" ({issue.candidate})"
+            if issue.stage == "normalization" and issue.candidate else ""
+        )
+        print(f"  {issue.stage}/{issue.code}{context}: {issue.message}")
 
 
     separator()

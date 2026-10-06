@@ -13,7 +13,7 @@ Interactive CLI input
 SearchQuery
         |
         v
-search_businesses(query, limit)
+ProspectorEngine.search / legacy search_businesses
         |
         v
 Playwright / Chromium
@@ -34,7 +34,13 @@ Detail panel identity validation and enrichment
 Website Engine enrichment when available
         |
         v
-SearchResult
+consolidated Business[]
+        |
+        v
+global normalization -> independent NormalizedBusiness[]
+        |
+        v
+SearchResult (businesses + original_businesses + issues)
         |
         +--> CLI presentation
         |
@@ -53,11 +59,11 @@ Google Maps results are loaded through a virtual/infinite feed with source-speci
 
 The detail stage requires a confirmed click, exact source place ID in the resulting URL and an equivalent title in the matching visible panel before applying available data. It keeps summaries if identity remains uncertain. Optional field reads avoid long waits for absent fields; a newly rendered field can legitimately share a previous Business's value. A numeric summary category that exactly repeats the available address's first segment is cleared as a source parsing artifact. Website Engine may add basic status/final URL, title, description, language and email data; percent-encoded `mailto:` links are decoded before email extraction. Inspection failure adds a recoverable issue without removing Maps data. A bounded feed stall with valid Businesses adds an issue. A verified source end would not; no reliable live end marker is currently established.
 
-`SearchResult` preserves query, ordered Businesses, `total_found` and execution time. Export is a subsequent operation through reusable `ExportService`.
+`SearchResult.businesses` contains ordered normalized objects and `original_businesses` contains corresponding consolidated source objects. `total_found` remains the extracted count; execution time includes normalization. Export is a subsequent operation through reusable `ExportService`.
 
 ## Not current
 
-The source does not implement general configuration profiles, a Query Builder, formal normalization, business deduplication or multi-input. `EngineConfig`, module logging, the public Error Model and a CLI-connected `ProspectorEngine` exist. The owner-approved Google Maps maximum is 100. Two owner-run CLI searches and exports demonstrated operation for the observed queries; final version acceptance remains separate.
+The source does not implement general configuration profiles, a Query Builder, business deduplication or multi-input. Global normalization, `EngineConfig`, module logging, the public Error Model and a CLI-connected `ProspectorEngine` exist. The owner-approved Google Maps maximum is 100. The two owner-run CLI searches and exports belong to the earlier v0.7.x baseline; v0.8.x owner acceptance remains separate.
 
 ## Approved target — TARGET_V0_7_X / TARGET_V1_0
 
@@ -85,14 +91,14 @@ The broader project model can be understood as:
 ```text
 input
   -> acquisition / source extraction
-  -> incremental enrichment
-  -> SearchResult boundary
-  -> normalization [v0.8.x]
-  -> multi-input / deduplication [v0.9.x]
+  -> incremental enrichment into Business[]
+  -> global normalization into NormalizedBusiness[] [v0.8.x]
+  -> SearchResult with both views
   -> consumers and export
+  -> multi-input / deduplication [future v0.9.x]
 ```
 
-This model explains the intended evolution without claiming that normalization, multi-input or deduplication are current stages. A source may use a browser, traditional HTML, an API or another public acquisition strategy; the shared result/domain boundary is the architectural constant, not a requirement to reuse the Google Maps implementation.
+This model shows the implemented v0.8.x boundary and the future v0.9.x scope. A source may use a browser, traditional HTML, an API or another public acquisition strategy; the shared result/domain boundary does not require reusing the Google Maps implementation.
 
 ## Pipeline design principles
 
@@ -100,4 +106,4 @@ The project evolved around small stages with explicit inputs and outputs, increm
 
 ## Future evolution — TARGET_V0_7_X / TARGET_V1_0 / POST_V1
 
-The stabilization line is intended to place the current extraction flow behind `ProspectorEngine(config).search(query)` while keeping CLI presentation and `ExportService` outside the extraction core. `v0.8.x` adds formal normalization; `v0.9.x` adds multi-input, deduplication and merge decisions. Additional source strategies, API consumers and physical Engine packaging remain later possibilities and are not current pipeline stages.
+The extraction flow runs behind `ProspectorEngine(config).search(query)` while CLI presentation and `ExportService` remain outside the extraction core. `v0.8.x` adds the shared normalization stage; `v0.9.x` retains multi-input, deduplication and merge decisions. Additional source strategies, API consumers and physical Engine packaging remain later possibilities.

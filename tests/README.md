@@ -13,7 +13,7 @@ tests/
 └── performance/   reserved benchmark work
 ```
 
-`tests/unit/` covers deterministic models, helpers, website components, selector registry/fallback behavior and explicitly named characterization cases. `tests/integration/` uses localhost and temporary export paths. These categories do not access Google Maps or the public Internet.
+`tests/unit/` covers deterministic models, normalization rules and engine, helpers, website components, selector registry/fallback behavior and explicitly named characterization cases. `tests/integration/` covers the shared normalization path, CLI/export values, controlled localhost browser use and temporary export paths. These categories do not access Google Maps or the public Internet.
 
 `tests/e2e/` contains live external checks. Enable the Google Maps check explicitly:
 

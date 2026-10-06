@@ -11,7 +11,7 @@ Use these distinctions when reviewing a change:
 - `TARGET_V0_8`, `TARGET_V0_9`, `TARGET_V1_0`: future scope;
 - `DEFERRED_DESIGN`: approved problem whose exact technical contract is not selected yet.
 
-`EngineConfig`, `ProspectorEngine` and the approved public Error Model are present under the accepted v0.7.x technical baseline at `ee6b69e`. The owner-approved Google Maps Engine maximum is 100 and the CLI default is 50; changes to that policy need explicit approval. Two owner-run manual searches and exports demonstrated the corrected route for their queries. Formal v0.8.0 design is still pending: do not implement normalization or deduplication merely because they appear in target documentation.
+`EngineConfig`, `ProspectorEngine` and the approved public Error Model are present under the accepted v0.7.x technical baseline at `ee6b69e`. The owner-approved Google Maps Engine maximum is 100 and the CLI default is 50; changes to that policy need explicit approval. The v0.8.x worktree adds a mandatory normalization stage and two public result views, verified offline and awaiting owner acceptance. The two earlier owner-run manual searches and exports belong to the v0.7.x baseline. Deduplication remains future scope.
 
 ## Project Philosophy
 
@@ -23,7 +23,7 @@ The project favors small focused components, composition over large classes, rea
 
 ```text
 src/models/                 domain models
-src/engines/                navigation, selector and website components
+src/engines/                navigation, selector, website and normalization components
 src/scraper/google_maps/    source-specific extraction pipeline
 src/exporters/              output writers
 src/services/               reusable services such as ExportService

@@ -1,6 +1,6 @@
 # Architecture
 
-This document separates the architecture implemented today from the approved future direction. Future components are not available APIs.
+This document separates the architecture implemented in the local worktree from future direction. v0.8.x is verified offline and awaits owner acceptance.
 
 ## Architectural Philosophy
 
@@ -36,7 +36,7 @@ source-specific pipeline
 external browser, network or parsing libraries
 ```
 
-The CLI calls `ProspectorEngine`, which delegates to the Google Maps source pipeline. The owner-approved Engine maximum is 100; invalid requests are rejected before browser startup. The legacy `search_businesses` wrapper remains a separate compatibility entrypoint.
+The CLI calls `ProspectorEngine`, which delegates to the Google Maps source pipeline and then the shared normalization stage. The owner-approved Engine maximum is 100; invalid requests are rejected before browser startup. The legacy `search_businesses` wrapper retains its input policy and uses the same normalization stage.
 
 ### Engine, utility and scraper
 
@@ -55,11 +55,13 @@ main.py
        -> summary parser -> ordered Business[]
        -> detail-panel identity validation and enrichment
        -> Website Engine enrichment
-       -> SearchResult
+       -> consolidated Business[]
+       -> global normalization -> NormalizedBusiness[]
+       -> SearchResult (normalized + original + issues)
   -> ExportService -> CSV/XLSX
 
 legacy Python caller -> search_businesses(query, limit=50)
-                   -> same Google Maps source pipeline
+                   -> same Google Maps source pipeline and normalization
 ```
 
 The `search_businesses(query, limit)` function remains a transitional compatibility boundary. It does not impose the new EngineConfig maximum retroactively.
@@ -68,13 +70,15 @@ The `search_businesses(query, limit)` function remains a transitional compatibil
 
 `main.py` owns interactive input, query construction, Engine invocation, user-facing results/issues/errors and export selection. It does not orchestrate Google Maps extraction stages.
 
-`src/models/` contains `Business`, `SearchQuery`, `SearchResult`, `WebsiteDocument` and `WebsiteMetadata`. `Business` is mutable and may be partially enriched. `SearchResult` preserves query, ordered Businesses, execution time and `total_found`.
+`src/models/` contains `Business`, `NormalizedBusiness`, `SearchQuery`, `SearchResult`, `WebsiteDocument` and `WebsiteMetadata`. `Business` is mutable and may be partially enriched. `SearchResult.businesses` contains ordered `NormalizedBusiness` objects and `original_businesses` contains their matching consolidated originals; query, complete execution time, issues and `total_found` are preserved.
 
 `NavigationEngine` delegates Google Maps navigation to `GoogleMapsNavigation`. Selector registry/elector/selector infrastructure provides lookup and fallback behavior; concrete DOM selectors remain source-specific.
 
 `src/scraper/google_maps/` coordinates feed loading, summary parsing, detail identity validation and website enrichment. `BrowserRuntime` owns Playwright, the browser and Maps pages for each execution. WebsiteCrawler closes its short-lived inspection pages.
 
-`EngineConfig` validates a requested limit, headless mode and optional website enrichment. The separate Google Maps Engine maximum is 100, while the CLI default is 50. A per-execution collector propagates recoverable detail, website and bounded-stall issues into the public `SearchResult.issues` list. Fatal Engine errors use typed `ProspectorError` categories with chained causes.
+`EngineConfig` validates a requested limit, headless mode and optional website enrichment. The separate Google Maps Engine maximum is 100, while the CLI default is 50. A per-execution collector propagates recoverable feed, detail, website and normalization issues into `SearchResult.issues`. Fatal Engine errors use typed `ProspectorError` categories with chained causes.
+
+`src/engines/normalization/` owns pure field rules and field-level recovery. `src/engines/global_pipeline.py` runs the source once, normalizes once and assembles both representations. The Google Maps source still owns navigation, candidate identity, extraction and enrichment.
 
 `src/engines/website/` contains crawling, parsing, extraction, email extraction, language detection and metadata construction. Basic status/final URL, title, description, language and email behavior is covered by controlled tests. Contact/about flags and effective `content_type` output remain incomplete.
 
@@ -119,7 +123,7 @@ The v0.7.x boundary means the Engine owns reusable prospecting orchestration; th
 ## Version boundaries
 
 - `v0.7.x` — `TARGET_V0_7_X`: Google Maps stability, configuration boundary, browser lifecycle, logging separation, error/partial semantics, internal Engine facade and CLI adapter.
-- `v0.8.x` — `TARGET_V0_8`: deterministic field normalization after extraction/enrichment.
+- `v0.8.x` — `CURRENT, OWNER_ACCEPTANCE_PENDING`: deterministic field normalization after extraction/enrichment, verified offline.
 - `v0.9.x` — `TARGET_V0_9`: multi-input, deduplication, merge and measured batch execution decisions.
 - `v1.0.0` — `TARGET_V1_0`: stable CLI/Engine contracts, documented behavior, regression safety and extraction-ready architecture.
 - post-v1 — `POST_V1`: possible physical Engine packaging/extraction, more sources/exporters or distributed execution.

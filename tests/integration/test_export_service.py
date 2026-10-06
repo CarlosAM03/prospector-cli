@@ -3,6 +3,7 @@ import csv
 from openpyxl import load_workbook
 
 from models.business import Business
+from models.normalized_business import NormalizedBusiness
 from models.search_query import SearchQuery, Source
 from models.search_result import SearchResult
 from services.export_service import ExportFormat, ExportService
@@ -13,16 +14,20 @@ def make_result():
     return SearchResult(
         query=query,
         businesses=[
-            Business(
-                name="Example Cafe",
-                category="Cafe",
+            NormalizedBusiness(
+                name="EXAMPLE CAFE",
+                category="CAFE",
                 address="Main Street",
-                phone="555-123-4567",
+                phone="555 123 4567",
                 email="info@example.test",
                 website="https://example.test",
-                language="es",
+                language="ES",
             )
         ],
+        original_businesses=[Business(
+            name="Example Cafe", category="Cafe", phone="555-123-4567",
+            language="es",
+        )],
     )
 
 
@@ -38,13 +43,13 @@ def test_export_service_writes_expected_csv_schema(tmp_path, monkeypatch):
     assert path.exists()
     assert rows[0] == ["Name", "Category", "Address", "Phone", "Email", "Website", "Language"]
     assert rows[1] == [
-        "Example Cafe",
-        "Cafe",
+        "EXAMPLE CAFE",
+        "CAFE",
         "Main Street",
-        "555-123-4567",
+        "555 123 4567",
         "info@example.test",
         "https://example.test",
-        "es",
+        "ES",
     ]
 
 
@@ -61,5 +66,8 @@ def test_export_service_writes_readable_xlsx(tmp_path, monkeypatch):
 
     assert path.exists()
     assert rows[0] == ("Name", "Category", "Address", "Phone", "Email", "Website", "Language")
-    assert rows[1][0] == "Example Cafe"
+    assert rows[1] == (
+        "EXAMPLE CAFE", "CAFE", "Main Street", "555 123 4567",
+        "info@example.test", "https://example.test", "ES",
+    )
     assert len(rows) == 2

@@ -32,7 +32,7 @@ Detail panel -> identity validation -> enrichment
 Website Engine enrichment
    |
    v
-SearchResult
+consolidated Business[] for the global normalization stage
 ```
 
 ## Navigation
@@ -53,7 +53,7 @@ The first pass parses available name, category, address, phone and Maps href dat
 
 ## Detail enrichment
 
-The detail stage confirms the exact target click, checks a verifiable target place ID in navigation state, selects a matching visible panel and compares names using only whitespace trimming/collapse and case-insensitive matching. A bounded reverse/forward feed search can recover an exact recycled href; failed recovery preserves the summary. Optional values shared with the previous Business may be accepted when newly rendered field elements belong to the verified panel; unchanged retained elements remain uncertain. Recoverable skips are reported through `SearchResult.issues`. Concrete selectors, waits and URL assumptions remain source-specific implementation details.
+The detail stage confirms the exact target click, checks a verifiable target place ID in navigation state, selects a matching visible panel and compares names using only whitespace trimming/collapse and case-insensitive matching. A bounded reverse/forward feed search can recover an exact recycled href; failed recovery preserves the summary. Optional values shared with the previous Business may be accepted when newly rendered field elements belong to the verified panel; unchanged retained elements remain uncertain. Recoverable skips are collected by the source and carried into the global `SearchResult.issues`. Concrete selectors, waits and URL assumptions remain source-specific implementation details.
 
 The identity-first enrichment design exists to avoid associating a later panel state with the wrong result. The first pass retains stable information such as the extracted name and Maps href; subsequent phases validate the expected identity before mutating the same `Business` object. This is a design rationale, not a claim that all current synchronization is deterministic.
 
@@ -71,4 +71,4 @@ The stabilization line aims to make this source pipeline a consumer of reusable 
 
 ## Relationship with the global architecture
 
-Google Maps is the currently implemented source strategy inside the broader project. Its browser/feed/detail phases are source-specific. A future source could use traditional HTML, another browser-driven application, an API or another public interface and could therefore require a substantially different pipeline while still producing the shared domain/result boundary. `WebsiteEngine`, selector infrastructure, navigation boundaries and export infrastructure may be reused when their behavior applies; they are not mandatory steps for every future source.
+Google Maps is the currently implemented source strategy inside the broader project. Its browser/feed/detail phases are source-specific. The global Engine normalizes its consolidated Businesses after this source pipeline completes; Google Maps does not own general normalization. A future source could use traditional HTML, another browser-driven application, an API or another public interface and could therefore require a substantially different pipeline while still producing the shared domain/result boundary. `WebsiteEngine`, selector infrastructure, navigation boundaries and export infrastructure may be reused when their behavior applies; they are not mandatory steps for every future source.
