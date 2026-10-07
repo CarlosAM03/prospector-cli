@@ -112,7 +112,8 @@ def test_cleanup_failure_does_not_mask_original_exception(monkeypatch):
         browser.closes += 1
         raise OSError("close failed")
     browser.close = bad_close
-    with pytest.raises(RuntimeError, match="original"):
+    with pytest.raises(RuntimeError, match="original") as failure:
         with browser_runtime.BrowserRuntime():
             raise RuntimeError("original")
     assert browser.closes == 1 and context.exits == 1
+    assert failure.value._prospector_cleanup_failed is True

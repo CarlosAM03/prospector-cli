@@ -8,10 +8,10 @@ Use these distinctions when reviewing a change:
 
 - `CURRENT`: implemented behavior;
 - `TECHNICAL_DEBT`: known implementation detail that should not become a desired contract;
-- `TARGET_V0_8`, `TARGET_V0_9`, `TARGET_V1_0`: future scope;
+- `TARGET_V0_8`, `TARGET_V0_9`, `TARGET_V1_0`: scope not yet implemented in an older checkpoint (check CURRENT first);
 - `DEFERRED_DESIGN`: approved problem whose exact technical contract is not selected yet.
 
-`EngineConfig`, `ProspectorEngine` and the approved public Error Model are present under the accepted v0.7.x technical baseline at `ee6b69e`. The owner-approved Google Maps Engine maximum is 100 and the CLI default is 50; changes to that policy need explicit approval. The v0.8.x worktree adds a mandatory normalization stage and two public result views, verified offline and awaiting owner acceptance. The two earlier owner-run manual searches and exports belong to the v0.7.x baseline. Deduplication remains future scope.
+`EngineConfig`, `ProspectorEngine` and the approved public Error Model are present under the accepted v0.7.x technical baseline at `ee6b69e`. The owner-approved Google Maps Engine maximum is 100 and the CLI default is 50; changes to that policy need explicit approval. The local worktree includes mandatory normalization and two public result views from v0.8.x, plus v0.9.x bounded sequential batch execution and exact verified-identity interquery selection. The latter is offline-verified and awaits owner acceptance; G23 general live validation is pending. Earlier owner-run manual searches/exports belong to v0.7.x. Field merge, heuristic matching and historical/campaign deduplication remain outside current scope.
 
 ## Project Philosophy
 

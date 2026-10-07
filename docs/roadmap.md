@@ -1,6 +1,6 @@
 # Roadmap
 
-This roadmap distinguishes historical milestones, capabilities verified in the local worktree and future targets. v0.8.x implementation is ready for owner acceptance, not yet accepted or released.
+This roadmap distinguishes historical milestones, capabilities verified in the local worktree and future targets. v0.9.x is offline-verified and awaits owner acceptance; no release is claimed.
 
 ## Historical milestones — HISTORICAL
 
@@ -44,9 +44,9 @@ The approved Master Plan defines the patch sequence; this roadmap records only v
 
 The local worktree implements deterministic, mandatory normalization after extraction/enrichment. `SearchResult` exposes independent normalized and consolidated original views. CLI and CSV/XLSX consume normalized values. The offline regression is the implementation evidence; owner manual acceptance remains N31. Deduplication is outside this boundary.
 
-## v0.9.x — TARGET_V0_9
+## v0.9.x — CURRENT / OFFLINE VERIFIED / OWNER ACCEPTANCE PENDING
 
-Multiple SearchQuery inputs plus deduplication, merge, batch-result semantics and measured execution/performance decisions. Browser strategy, identity confidence, concurrency and query-level partial outcomes remain future design work.
+The local worktree implements bounded sequential `search_many()` execution, typed per-query outcomes, positional identity evidence, exact interquery deduplication of verified Google Place IDs and separate seven-column CSV/XLSX exports. A narrow owner-authorized identity investigation supported P92; it was not general live acceptance. G23 remains pending separate owner authorization. No field merge, heuristic matching, persistence, campaigns, concurrency or new sources are part of this line.
 
 ## v1.0.0 — TARGET_V1_0
 

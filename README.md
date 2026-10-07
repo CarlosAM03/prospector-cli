@@ -31,6 +31,8 @@ Both supported search entrypoints normalize after source enrichment. `result.bus
 
 Businesses may remain partially enriched when detail-panel or website inspection cannot provide every field. Website inspection currently covers basic status/final URL, title, description, language and email extraction. Contact/about detection and effective `content_type` output remain incomplete.
 
+The local v0.9.x worktree also provides `ProspectorEngine.search_many()` for 1–5 ordered `BatchQuery` requests and a CLI `Multiple Searches` path for 2–3 requests. Each query has its own limit and browser lifecycle. `BatchSearchResult.entries` retain complete individual results, safe failures, counts and per-observation provenance. A verified, namespaced Google Place ID can suppress an observation only in a *later* query; unknown identity and repetitions within one query remain exportable. Batch CSV/XLSX files are separate per valid query, including a header-only file when all rows were suppressed. This implementation is offline-verified, not owner-accepted or released; the exceptional P92 identity study was not general live acceptance (G23 remains pending).
+
 ## Philosophy
 
 Prospector CLI turns public-source information into reusable structured prospect data while keeping CRM, sales and other business workflows outside the repository. The project favors a lightweight, readable and modular extraction system that can evolve without becoming a private application platform.
@@ -48,7 +50,7 @@ The project is guided by:
 - extensibility for future source strategies;
 - configuration over hardcoded execution behavior as the architecture evolves.
 
-Some of that direction is already represented by current modules; some is the target toward `v1.0.0`. Formal normalization is implemented in the local v0.8.x worktree; validation, deduplication and configuration profiles remain future work.
+Some of that direction is already represented by current modules; some is the target toward `v1.0.0`. Formal normalization and bounded, exact interquery deduplication are implemented in the local worktree. General validation, heuristic matching, persistence and configuration profiles are not.
 
 ## Installation
 
@@ -119,7 +121,7 @@ CLI adapter -> ProspectorEngine(config) -> extraction -> normalization -> Search
                                                                      +-> ExportService -> CSV/XLSX
 ```
 
-`EngineConfig` and `ProspectorEngine` are integrated with the CLI under the owner-approved Google Maps maximum of 100. The wrapper remains the legacy programmatic path with the same mandatory normalization stage. Offline tests cover the feed/detail/website flow and both normalized result routes. The owner completed two manual CLI searches and CSV/XLSX exports at limits 75 and 50 on the v0.7.x baseline; these demonstrate operation for those queries, not v0.8.x live acceptance, catalog completeness or universal reliability. Multi-input, deduplication and merge remain future work. Physical extraction into a separately packaged Engine is a post-v1 possibility, not a prerequisite for `v1.0.0`.
+`EngineConfig` and `ProspectorEngine` are integrated with the CLI under the owner-approved Google Maps maximum of 100. The wrapper remains the legacy programmatic path with the same mandatory normalization stage. Offline tests cover the feed/detail/website flow, both normalized result routes and the v0.9.x bounded batch path. The owner completed two manual CLI searches and CSV/XLSX exports at limits 75 and 50 on the v0.7.x baseline; these demonstrate operation for those queries, not v0.9.x live acceptance, catalog completeness or universal reliability. Batch execution and exact interquery selection are CURRENT in the local worktree; field merge, heuristic matching and persistence are outside v0.9.x. Physical extraction into a separately packaged Engine is a post-v1 possibility, not a prerequisite for `v1.0.0`.
 
 ## Project evolution
 

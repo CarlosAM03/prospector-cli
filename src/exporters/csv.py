@@ -1,7 +1,7 @@
 import csv
 
 from exporters.base import Exporter
-from models.search_result import SearchResult
+from exporters.export_view import ExportView
 
 
 class CsvExporter(Exporter):
@@ -20,7 +20,7 @@ class CsvExporter(Exporter):
 
     def export(
         self,
-        result: SearchResult,
+        result: ExportView,
         output_path: str,
     ) -> None:
         """

@@ -17,11 +17,13 @@ from models.business import Business
 from models.search_query import SearchQuery
 from models.search_issue import SearchIssue
 from models.search_result import SearchResult
+from models.source_identity import SourceIdentityEvidence
 
 from .detail_panel import enrich_business
 from .parser import category_repeats_address
 from .result_list import extract_businesses
 from .search import create_search_page
+from .source_identity import verified_place_identity
 from .website_enrichment import enrich_websites
 
 
@@ -33,6 +35,13 @@ class _SourceResult:
     businesses: list[Business] = field(default_factory=list)
     execution_time: float = 0.0
     issues: list[SearchIssue] = field(default_factory=list)
+    identities: list[SourceIdentityEvidence] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        if len(self.identities) != len(self.businesses):
+            raise ValueError("source identity sidecar must match Business count")
+        if any(type(item) is not SourceIdentityEvidence for item in self.identities):
+            raise TypeError("source identity sidecar contains an invalid item")
 
     @property
     def total_found(self) -> int:
@@ -101,8 +110,10 @@ def _run_google_maps(
                     for item in results
                 ]
             stage_start = time.perf_counter()
+            identities: list[SourceIdentityEvidence] = []
             businesses = _enrich_businesses(
-                page=page, results=results, issue_collector=collector
+                page=page, results=results, issue_collector=collector,
+                identity_sink=identities,
             )
             if metrics_sink is not None:
                 metrics_sink["detail_seconds"] = time.perf_counter() - stage_start
@@ -111,11 +122,14 @@ def _run_google_maps(
                     for business, before in zip(businesses, summary_fields)
                 )
             if website_enrichment:
+                before_website = tuple(id(business) for business in businesses)
                 stage_start = time.perf_counter()
                 businesses = enrich_websites(
                     browser=runtime.browser, businesses=businesses,
                     issue_collector=collector,
                 )
+                if tuple(id(business) for business in businesses) != before_website:
+                    raise ValueError("website enrichment changed source identity order")
                 if metrics_sink is not None:
                     metrics_sink["website_seconds"] = time.perf_counter() - stage_start
             # Runtime owns the Maps page and browser. WebsiteCrawler closes
@@ -133,20 +147,30 @@ def _run_google_maps(
         businesses=businesses,
         execution_time=time.perf_counter() - start_time,
         issues=list(collector.items),
+        identities=identities,
     )
 
 
-def _enrich_businesses(page, results: list[dict], issue_collector=None) -> list[Business]:
+def _enrich_businesses(
+    page, results: list[dict], issue_collector=None,
+    identity_sink: list[SourceIdentityEvidence] | None = None,
+) -> list[Business]:
     businesses: list[Business] = []
     for result in results:
+        capture: dict = {}
         business = enrich_business(
             page=page,
             href=result["href"],
             business=result["business"],
             identity=result["identity"],
             issue_collector=issue_collector,
+            identity_sink=capture,
         )
         if category_repeats_address(business.category, business.address):
             business.category = None
         businesses.append(business)
+        if identity_sink is not None:
+            identity_sink.append(verified_place_identity(
+                result["href"], capture.get("verified_selected_url"),
+            ))
     return businesses

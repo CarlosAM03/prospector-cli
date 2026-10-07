@@ -9,6 +9,7 @@ from models.normalized_business import NormalizedBusiness
 from engines.issue_collector import IssueCollector
 from models.search_query import SearchQuery, Source
 from models.search_issue import SearchIssue
+from models.source_identity import VerificationState
 from scraper.google_maps import scraper
 from services.export_service import ExportFormat, ExportService
 
@@ -179,3 +180,36 @@ def test_address_fragment_category_is_cleared_without_changing_identity(monkeypa
     ]
     assert result.total_found == 3
     assert browser.closes == 1
+
+
+def test_p92_source_sidecar_survives_website_issue_and_keeps_position(monkeypatch):
+    feature = "0x80d94840107994c1:0x95f9d1c6296e50c3"
+    place_id = "ChIJwZR5EEBI2YARw1BuKcbR-ZU"
+    first = record("Cafe", "1")
+    first["href"] = (
+        "https://www.google.com/maps/place/Cafe/data="
+        f"!4m7!3m6!1s{feature}!8m2!3d32.5!4d-117!19s{place_id}"
+    )
+    second = record("Other", "2")
+    _, query = setup(monkeypatch, [first, second])
+
+    def detail(**kwargs):
+        if kwargs["business"].name == "Cafe":
+            kwargs["identity_sink"]["verified_selected_url"] = (
+                "https://www.google.com/maps/place/Cafe/data="
+                f"!3m6!1s{feature}!8m2!3d32.5!4d-117"
+            )
+        return kwargs["business"]
+
+    def website(**kwargs):
+        kwargs["issue_collector"].record("website", "inspection_unavailable")
+        return kwargs["businesses"]
+
+    monkeypatch.setattr(scraper, "enrich_business", detail)
+    monkeypatch.setattr(scraper, "enrich_websites", website)
+    source = scraper._run_google_maps(query, 2, headless=True, website_enrichment=True)
+    assert [business.name for business in source.businesses] == ["Cafe", "Other"]
+    assert len(source.identities) == source.total_found == 2
+    assert source.identities[0].verified.value == place_id
+    assert source.identities[1].verification_state is VerificationState.UNVERIFIED
+    assert [issue.stage for issue in source.issues] == ["website"]

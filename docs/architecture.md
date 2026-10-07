@@ -1,6 +1,6 @@
 # Architecture
 
-This document separates the architecture implemented in the local worktree from future direction. v0.8.x is verified offline and awaits owner acceptance.
+This document separates the architecture implemented in the local worktree from future direction. v0.9.x is verified offline and awaits owner acceptance; its general live acceptance gate remains pending.
 
 ## Architectural Philosophy
 
@@ -62,6 +62,13 @@ main.py
 
 legacy Python caller -> search_businesses(query, limit=50)
                    -> same Google Maps source pipeline and normalization
+
+batch Python caller / CLI -> ProspectorEngine.search_many(BatchQuery[1..5])
+  -> sequential individual source + global normalization executions
+  -> positional source-identity evidence sidecar
+  -> exact, in-memory interquery export selection
+  -> BatchSearchResult (complete SearchResult per valid query + provenance)
+  -> ExportService selected CSV/XLSX files outside the Engine
 ```
 
 The `search_businesses(query, limit)` function remains a transitional compatibility boundary. It does not impose the new EngineConfig maximum retroactively.
@@ -80,9 +87,12 @@ The `search_businesses(query, limit)` function remains a transitional compatibil
 
 `src/engines/normalization/` owns pure field rules and field-level recovery. `src/engines/global_pipeline.py` runs the source once, normalizes once and assembles both representations. The Google Maps source still owns navigation, candidate identity, extraction and enrichment.
 
+`src/engines/batch/` owns pure export selection. It compares only verified `(source, kind, value)` identities from earlier queries, keeps unknowns and intraconsulta repetitions, and never merges fields or changes a `SearchResult`. Source evidence is a private 1:1 sidecar, not a thirteenth business field. A controlled typed query failure can be recorded as `FAILED`; unexpected errors or untrusted cleanup interrupt with a completed prefix. The batch has no persisted identity index or global browser lock.
+
 `src/engines/website/` contains crawling, parsing, extraction, email extraction, language detection and metadata construction. Basic status/final URL, title, description, language and email behavior is covered by controlled tests. Contact/about flags and effective `content_type` output remain incomplete.
 
 `ExportService` consumes `SearchResult` and writes CSV/XLSX. It is reusable application/export infrastructure, outside extraction core and not CLI-only.
+Its batch route consumes an explicit normalized export selection and writes one collision-protected file per valid query; the individual route remains unchanged.
 
 ### Reusable design scope versus current usage
 
@@ -124,7 +134,7 @@ The v0.7.x boundary means the Engine owns reusable prospecting orchestration; th
 
 - `v0.7.x` — `TARGET_V0_7_X`: Google Maps stability, configuration boundary, browser lifecycle, logging separation, error/partial semantics, internal Engine facade and CLI adapter.
 - `v0.8.x` — `CURRENT, OWNER_ACCEPTANCE_PENDING`: deterministic field normalization after extraction/enrichment, verified offline.
-- `v0.9.x` — `TARGET_V0_9`: multi-input, deduplication, merge and measured batch execution decisions.
+- `v0.9.x` — `CURRENT, OFFLINE_VERIFIED / OWNER_ACCEPTANCE_PENDING`: bounded sequential batch, verified-identity interquery selection, safe failures and independent exports. No field merge or historical matching.
 - `v1.0.0` — `TARGET_V1_0`: stable CLI/Engine contracts, documented behavior, regression safety and extraction-ready architecture.
 - post-v1 — `POST_V1`: possible physical Engine packaging/extraction, more sources/exporters or distributed execution.
 

@@ -12,6 +12,7 @@ from models.normalized_business import NormalizedBusiness
 from models.search_issue import SearchIssue
 from models.search_query import SearchQuery, Source
 from models.search_result import SearchResult
+from models.source_identity import SourceIdentityEvidence
 from scraper.google_maps import scraper
 from scraper.google_maps.scraper import _SourceResult
 from engines import prospector_engine
@@ -19,6 +20,10 @@ from engines import prospector_engine
 
 def query():
     return SearchQuery(Source.GOOGLE_MAPS, "cafes", "Tijuana")
+
+
+def unverified(count):
+    return [SourceIdentityEvidence.unverified() for _ in range(count)]
 
 
 def test_engine_and_wrapper_use_same_single_normalization(monkeypatch):
@@ -35,7 +40,7 @@ def test_engine_and_wrapper_use_same_single_normalization(monkeypatch):
         calls.append((args, kwargs))
         return _SourceResult(args[0], [replace(original)], 0.01, [
             SearchIssue("feed", "partial_results", "Safe."),
-        ])
+        ], unverified(1))
 
     def count_normalize(self, businesses, **kwargs):
         normalized_calls.append(len(businesses))
@@ -84,7 +89,9 @@ def test_controlled_hundred_results_keep_order_and_count(monkeypatch):
     originals = [Business(f" Cafe {index} ") for index in range(100)]
     monkeypatch.setattr(
         prospector_engine, "_run_google_maps",
-        lambda q, limit, **kwargs: _SourceResult(q, originals[:limit]),
+        lambda q, limit, **kwargs: _SourceResult(
+            q, originals[:limit], identities=unverified(limit),
+        ),
     )
     result = ProspectorEngine(EngineConfig(limit=100)).search(query())
     assert result.total_found == 100
@@ -101,7 +108,7 @@ def test_normalization_issue_follows_existing_issue(monkeypatch):
     def source(q, limit, **kwargs):
         return _SourceResult(q, [Business(" cafe ", phone="12345")], issues=[
             SearchIssue("website", "inspection_unavailable", "Safe."),
-        ])
+        ], identities=unverified(1))
 
     monkeypatch.setattr(prospector_engine, "_run_google_maps", source)
     result = ProspectorEngine(EngineConfig(limit=1)).search(query())
@@ -114,7 +121,9 @@ def test_normalization_issue_follows_existing_issue(monkeypatch):
 def test_unexpected_normalization_error_is_not_hidden(monkeypatch):
     monkeypatch.setattr(
         prospector_engine, "_run_google_maps",
-        lambda q, limit, **kwargs: _SourceResult(q, [Business("Cafe")]),
+        lambda q, limit, **kwargs: _SourceResult(
+            q, [Business("Cafe")], identities=unverified(1),
+        ),
     )
     def broken(self, businesses, **kwargs):
         raise RuntimeError("normalizer defect")

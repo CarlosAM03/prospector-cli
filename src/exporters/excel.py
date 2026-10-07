@@ -1,7 +1,7 @@
 from openpyxl import Workbook
 
 from exporters.base import Exporter
-from models.search_result import SearchResult
+from exporters.export_view import ExportView
 
 
 class ExcelExporter(Exporter):
@@ -20,7 +20,7 @@ class ExcelExporter(Exporter):
 
     def export(
         self,
-        result: SearchResult,
+        result: ExportView,
         output_path: str,
     ) -> None:
         """

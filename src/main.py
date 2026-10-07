@@ -2,9 +2,11 @@ from models.search_query import (
     SearchQuery,
     Source,
 )
+from models.batch import BatchQuery, QueryStatus
+from uuid import uuid4
 
 from engines.config import EngineConfig, GOOGLE_MAPS_ENGINE_MAX_LIMIT
-from engines.errors import ProspectorError
+from engines.errors import BatchInterruptedError, ProspectorError
 from engines.prospector_engine import ProspectorEngine
 
 from services.export_service import (
@@ -136,7 +138,11 @@ def choose_main_option() -> str:
     )
 
     print(
-        "2) Exit"
+        "2) Multiple Searches"
+    )
+
+    print(
+        "3) Exit"
     )
 
 
@@ -282,6 +288,91 @@ def execute_search() -> None:
 
 
 
+def _capture_batch_query(ordinal: int) -> BatchQuery:
+    print(f"Search {ordinal}")
+    keyword = input("Keyword  : ").strip()
+    location = input("Location : ").strip()
+    limit = parse_requested_limit(input("Limit (default 50, maximum 100) : "))
+    return BatchQuery(SearchQuery(Source.GOOGLE_MAPS, keyword, location), limit)
+
+
+def execute_multiple_searches() -> None:
+    """Collect and confirm two or three requests before starting the Engine."""
+    try:
+        requests = [_capture_batch_query(1), _capture_batch_query(2)]
+        if input("Add a third search? (y/N) : ").strip().lower() in {"y", "yes"}:
+            requests.append(_capture_batch_query(3))
+    except ValueError as error:
+        print(f"Batch could not start: {error}")
+        return
+    separator()
+    print("Batch Summary")
+    for ordinal, request in enumerate(requests, start=1):
+        print(f"  q{ordinal:02d}: {request.query.keyword} | {request.query.location} | limit {request.limit}")
+    if input("Start these searches? (y/N) : ").strip().lower() not in {"y", "yes"}:
+        print("Batch cancelled before execution.")
+        return
+
+    engine = ProspectorEngine(EngineConfig())
+    try:
+        batch = engine.search_many(requests)
+        interrupted = None
+    except BatchInterruptedError as error:
+        batch = error.completed
+        interrupted = error
+        print(
+            f"Batch interrupted at q{error.interrupted_query_index + 1:02d} "
+            f"({error.reason_code}); remaining queries were not run: "
+            f"{', '.join(f'q{index + 1:02d}' for index in error.remaining_query_indices) or '-'}"
+        )
+    except ProspectorError as error:
+        print(f"Batch could not start: {error}")
+        return
+
+    separator()
+    print(f"Batch Execution Time: {batch.execution_time:.2f} seconds")
+    print(
+        f"Observed: {batch.total_observations} | Exportable: {batch.total_exportable} | "
+        f"Suppressed: {batch.duplicates_suppressed} | Unverified: {batch.total_unverified}"
+    )
+    for ordinal, entry in enumerate(batch.entries, start=1):
+        print(
+            f"q{ordinal:02d} {entry.status.value}: limit {entry.request.limit}, "
+            f"found {entry.observed_count}, exportable {entry.exportable_count}, "
+            f"suppressed {entry.suppressed_count}, unverified "
+            f"{len(entry.unverified_identity_indices)}, time {entry.execution_time:.2f}s"
+        )
+        if entry.status is QueryStatus.FAILED:
+            print(f"  {entry.error.category}: {entry.error.message}")
+            continue
+        print(f"  Recoverable Issues: {len(entry.result.issues)}")
+        for issue in entry.result.issues:
+            print(f"  {issue.stage}/{issue.code}: {issue.message}")
+        for position in entry.export_indices:
+            print_business(position + 1, entry.result.businesses[position])
+
+    export_format = choose_export_format()
+    if export_format is None:
+        print("Batch completed without export." if interrupted is None
+              else "Completed prefix retained without export; batch remains interrupted.")
+        return
+    operation_id = uuid4().hex
+    for ordinal, entry in enumerate(batch.entries, start=1):
+        if entry.status is QueryStatus.FAILED:
+            print(f"q{ordinal:02d}: no file for failed query.")
+            continue
+        try:
+            filename = ExportService.export_batch_entry(
+                entry, export_format, operation_id, ordinal,
+            )
+        except (OSError, ValueError) as error:
+            print(f"q{ordinal:02d}: export failed; incomplete file not retained: {error}")
+            continue
+        print(f"q{ordinal:02d}: {filename} ({entry.suppressed_count} duplicates suppressed)")
+    if interrupted is not None:
+        print("Only the safe completed prefix was offered for export; batch is not complete.")
+
+
 def main() -> None:
 
     while True:
@@ -295,6 +386,11 @@ def main() -> None:
 
 
         elif option == "2":
+
+            execute_multiple_searches()
+
+
+        elif option == "3":
 
             separator()
 

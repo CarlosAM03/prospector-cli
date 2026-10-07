@@ -27,6 +27,8 @@ class BrowserRuntime:
             try:
                 self._playwright_context.__exit__(*original_error)
             except Exception as cleanup_error:
+                if original_error[1] is not None:
+                    original_error[1]._prospector_cleanup_failed = True
                 logger.warning(
                     "Playwright startup cleanup failed after original error: %s",
                     cleanup_error,
@@ -69,6 +71,8 @@ class BrowserRuntime:
             logger.error("Browser runtime cleanup failed: %s", close_error)
             raise close_error
         if close_error is not None:
+            if exc_value is not None:
+                exc_value._prospector_cleanup_failed = True
             logger.warning("Browser runtime cleanup failed after original error: %s", close_error)
         else:
             logger.debug("Browser runtime closed")

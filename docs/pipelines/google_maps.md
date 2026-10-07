@@ -57,6 +57,8 @@ The detail stage confirms the exact target click, checks a verifiable target pla
 
 The identity-first enrichment design exists to avoid associating a later panel state with the wrong result. The first pass retains stable information such as the extracted name and Maps href; subsequent phases validate the expected identity before mutating the same `Business` object. This is a design rationale, not a claim that all current synchronization is deterministic.
 
+For the v0.9.x batch path, the source also returns a private positional `SourceIdentityEvidence[]` sidecar. Only a supported `!19s` Google Place ID with exact candidate/selected feature-token agreement and successful panel transition is marked `VERIFIED`; `!1s` alone is a navigation token, not a certified Place ID. Missing, ambiguous or unknown tokens remain `UNVERIFIED` and cannot drive cross-query suppression. The sidecar does not add a field to `Business` or alter extraction order. A narrow owner-authorized live study supported this restricted namespace; it was not the general G23 acceptance run.
+
 ## Website enrichment
 
 When a website is available, the scraper delegates inspection to Website Engine. Status/final URL, title, description, language and email metadata may be added. Percent-encoded `mailto:` URLs are decoded before email extraction; arbitrary source text is not rewritten into guessed addresses. Website failure preserves the Business and adds a recoverable `SearchIssue`.

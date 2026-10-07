@@ -61,9 +61,13 @@ The detail stage requires a confirmed click, exact source place ID in the result
 
 `SearchResult.businesses` contains ordered normalized objects and `original_businesses` contains corresponding consolidated source objects. `total_found` remains the extracted count; execution time includes normalization. Export is a subsequent operation through reusable `ExportService`.
 
+## Batch path — CURRENT, offline verified
+
+`ProspectorEngine.search_many()` accepts 1–5 ordered `BatchQuery` values after full preflight/snapshot. The CLI supports 2–3 with explicit confirmation. Each query runs the same source/enrichment/global normalization path separately, with a positional private source-identity sidecar. The completed `BatchSearchResult` keeps each full `SearchResult` and selects normalized export rows only by verified identities already seen in earlier queries. Unknown identities remain exportable, and no fields are merged. `FAILED` typed queries can be followed by later queries; critical failures interrupt with a safe completed prefix. ExportService writes independent CSV/XLSX files outside the Engine. This path has offline evidence only; G23 is pending separate owner live authorization.
+
 ## Not current
 
-The source does not implement general configuration profiles, a Query Builder, business deduplication or multi-input. Global normalization, `EngineConfig`, module logging, the public Error Model and a CLI-connected `ProspectorEngine` exist. The owner-approved Google Maps maximum is 100. The two owner-run CLI searches and exports belong to the earlier v0.7.x baseline; v0.8.x owner acceptance remains separate.
+The source does not implement general configuration profiles, a Query Builder, heuristic or historical business matching, persistence, campaigns or multi-source acquisition. Global normalization, bounded multi-input, `EngineConfig`, module logging, the public Error Model and a CLI-connected `ProspectorEngine` exist. The owner-approved Google Maps maximum is 100. Earlier owner-run CLI searches and exports belong to the v0.7.x baseline, not v0.9.x general live acceptance.
 
 ## Approved target — TARGET_V0_7_X / TARGET_V1_0
 
@@ -82,7 +86,7 @@ SearchResult
         +--> ExportService -> CSV/XLSX
 ```
 
-Normalization belongs to `v0.8.x`; multiple inputs, deduplication and merge belong to `v0.9.x`. A future API is a possible consumer, not a current stage.
+Normalization belongs to `v0.8.x`; bounded multi-input and strict verified-identity interquery selection belong to implemented `v0.9.x`. Field merge is excluded. A future API is a possible consumer, not a current stage.
 
 ## Architectural Pipeline Model
 
@@ -95,10 +99,10 @@ input
   -> global normalization into NormalizedBusiness[] [v0.8.x]
   -> SearchResult with both views
   -> consumers and export
-  -> multi-input / deduplication [future v0.9.x]
+  -> bounded multi-input / exact interquery selection [current v0.9.x]
 ```
 
-This model shows the implemented v0.8.x boundary and the future v0.9.x scope. A source may use a browser, traditional HTML, an API or another public acquisition strategy; the shared result/domain boundary does not require reusing the Google Maps implementation.
+This model shows the implemented v0.8.x normalization and v0.9.x batch boundary. A future source may use a browser, traditional HTML, an API or another public acquisition strategy; the shared result/domain boundary does not require reusing the Google Maps implementation.
 
 ## Pipeline design principles
 
@@ -106,4 +110,4 @@ The project evolved around small stages with explicit inputs and outputs, increm
 
 ## Future evolution — TARGET_V0_7_X / TARGET_V1_0 / POST_V1
 
-The extraction flow runs behind `ProspectorEngine(config).search(query)` while CLI presentation and `ExportService` remain outside the extraction core. `v0.8.x` adds the shared normalization stage; `v0.9.x` retains multi-input, deduplication and merge decisions. Additional source strategies, API consumers and physical Engine packaging remain later possibilities.
+The extraction flow runs behind `ProspectorEngine(config).search(query)` or bounded `search_many(queries)` while CLI presentation and `ExportService` remain outside the extraction core. `v0.8.x` added shared normalization; `v0.9.x` adds strict interquery selection without merge. Additional source strategies, API consumers and physical Engine packaging remain later possibilities.

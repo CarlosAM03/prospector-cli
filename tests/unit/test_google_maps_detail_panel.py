@@ -387,3 +387,41 @@ def test_absent_optional_fields_do_not_consume_auto_waits(monkeypatch):
     business = run(monkeypatch, page)
     assert business.address == "Summary address"
     assert page.clock <= 0.2
+
+
+def test_p92_identity_sink_requires_confirmed_target_panel(monkeypatch):
+    feature = "0x80d94840107994c1:0x95f9d1c6296e50c3"
+    place_id = "ChIJwZR5EEBI2YARw1BuKcbR-ZU"
+    candidate = (
+        "https://www.google.com/maps/place/Cafe/data="
+        f"!4m7!3m6!1s{feature}!8m2!3d32.5!4d-117!19s{place_id}"
+    )
+
+    def transition(page):
+        page.url = (
+            "https://www.google.com/maps/place/Cafe/data="
+            f"!3m6!1s{feature}!8m2!3d32.5!4d-117"
+        )
+        page.state = {"title": "Cafe", "text": "Cafe confirmed",
+                      "address": "New address", "phone": None, "website": None}
+
+    monkeypatch.setattr(detail_panel.time, "monotonic", lambda: page.clock)
+    page = Page(candidate, transition)
+    capture = {}
+    detail_panel.enrich_business(
+        page, candidate, Business("Cafe"), {"name": "Cafe"},
+        identity_sink=capture,
+    )
+    assert capture["verified_selected_url"] == page.url
+
+    def wrong(page):
+        transition(page)
+        page.state["title"] = "Other Cafe"
+
+    page = Page(candidate, wrong)
+    capture = {}
+    detail_panel.enrich_business(
+        page, candidate, Business("Cafe"), {"name": "Cafe"},
+        identity_sink=capture,
+    )
+    assert capture == {}

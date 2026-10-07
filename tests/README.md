@@ -15,6 +15,8 @@ tests/
 
 `tests/unit/` covers deterministic models, normalization rules and engine, helpers, website components, selector registry/fallback behavior and explicitly named characterization cases. `tests/integration/` covers the shared normalization path, CLI/export values, controlled localhost browser use and temporary export paths. These categories do not access Google Maps or the public Internet.
 
+The v0.9.x offline suite additionally covers batch preflight/snapshot, identity-sidecar alignment and negative cases, sequential runtime/failure isolation, exact interquery selection, provenance, CLI confirmation and independent CSV/XLSX files. Synthetic IDs in these tests validate algorithm behavior; the separately owner-authorized P92 live identity investigation is recorded under `temp/Planeacion/v0.9.0/` and does not authorize the general G23 live gate.
+
 `tests/e2e/` contains live external checks. Enable the Google Maps check explicitly:
 
 ```powershell

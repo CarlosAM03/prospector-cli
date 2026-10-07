@@ -133,7 +133,7 @@ def _fields(panel, selector, deadline):
 
 def enrich_business(
     page, href, business: Business, identity: dict | None = None,
-    issue_collector=None,
+    issue_collector=None, identity_sink: dict | None = None,
 ) -> Business:
     """Keep the summary unless target URL and fresh panel agree on identity."""
     expected_id = extract_place_id(href)
@@ -225,6 +225,8 @@ def enrich_business(
                 setattr(business, field, value)
             if uncertain_fields:
                 _record_skip(issue_collector, href, "fields_unverifiable")
+            if identity_sink is not None:
+                identity_sink["verified_selected_url"] = page.url
             return business
         except Exception as error:
             # A panel transition/optional read failure is recoverable for this

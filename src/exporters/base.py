@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from models.search_result import SearchResult
+from exporters.export_view import ExportView
 
 
 class Exporter(ABC):
@@ -17,7 +17,7 @@ class Exporter(ABC):
     @abstractmethod
     def export(
         self,
-        result: SearchResult,
+        result: ExportView,
         output_path: str,
     ) -> None:
         """
