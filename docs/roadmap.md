@@ -1,6 +1,6 @@
 # Roadmap
 
-This roadmap distinguishes historical milestones, capabilities verified in the local worktree and future targets. v0.9.x is offline-verified and awaits owner acceptance; no release is claimed.
+This roadmap distinguishes historical milestones, owner-accepted capabilities and future targets. v0.9.x is functionally complete on implementation baseline `c7193d55a36618e934e29a9678b3f9b01e9b6543`; no tag or release is claimed.
 
 ## Historical milestones — HISTORICAL
 
@@ -24,7 +24,7 @@ These are historical milestones and architectural context. Some old objective wo
 
 Phase 0 — baseline audit, Phase 1 — regression safety, and controlled Google Maps hardening are complete in source. The permanent suite has deterministic unit tests, controlled integration tests and an opt-in live Google Maps E2E check. The default suite remains offline. A separately authorized C05 pilot ran three of eight planned combinations and stopped at the 180-second hard timeout on the third.
 
-The application remains a CLI-first Google Maps pipeline with Website Engine enrichment and CSV/XLSX export. `BrowserRuntime` owns per-search resources; `SearchResult.issues` and typed fatal errors are implemented. The CLI calls `ProspectorEngine` with an optional requested limit defaulting to 50 and rejects values above the owner-approved Google Maps maximum of 100 before browser access. The legacy wrapper remains available without that new cap. Both paths now pass through the shared normalization stage and expose normalized plus original results. The earlier C05 pilot exposed detail problems; later corrections have deterministic offline coverage. The owner subsequently completed manual CLI searches and exports at limits 75 and 50 on the v0.7.x baseline. These do not establish v0.8.x live acceptance, full-pipeline capacity at 100 or source catalog completeness. Commit `ee6b69e` remains the accepted v0.7.x functional baseline; no v0.8.x release tag is claimed.
+The application remains a CLI-first Google Maps pipeline with Website Engine enrichment and CSV/XLSX export. `BrowserRuntime` owns per-search resources; `SearchResult.issues` and typed fatal errors are implemented. The CLI calls `ProspectorEngine` with an optional requested limit defaulting to 50 and rejects values above the owner-approved Google Maps maximum of 100 before browser access. The legacy wrapper remains available without that new cap. Both paths now pass through the shared normalization stage and expose normalized plus original results. The earlier C05 pilot exposed detail problems; later corrections have deterministic offline coverage. The owner subsequently completed manual CLI searches and exports at limits 75 and 50 on the v0.7.x baseline. Those earlier runs alone did not establish v0.8.x acceptance, full-pipeline capacity at 100 or source catalog completeness; the later v0.8.x functional acceptance is recorded below with its N31 caveat. Commit `ee6b69e` remains the accepted v0.7.x functional baseline; no v0.8.x release tag is claimed.
 
 ## v0.7.x — CURRENT ACCEPTED BASELINE
 
@@ -40,17 +40,17 @@ The stabilization line covers:
 
 The approved Master Plan defines the patch sequence; this roadmap records only verified current behavior and line-level targets.
 
-## v0.8.x — CURRENT / OWNER ACCEPTANCE PENDING
+## v0.8.x — OWNER ACCEPTED / COMPLETE
 
-The local worktree implements deterministic, mandatory normalization after extraction/enrichment. `SearchResult` exposes independent normalized and consolidated original views. CLI and CSV/XLSX consume normalized values. The offline regression is the implementation evidence; owner manual acceptance remains N31. Deduplication is outside this boundary.
+Deterministic, mandatory normalization follows extraction/enrichment. `SearchResult` exposes independent normalized and consolidated original views; CLI and CSV/XLSX consume normalized values. The owner accepted v0.8.0 functionally with an explicit N31 caveat: paired live inspection of `Business` and `NormalizedBusiness` from the same execution was not performed. Their correspondence, preservation and independence were verified offline; do not record paired live N31 as PASS. Deduplication is outside this boundary.
 
-## v0.9.x — CURRENT / OFFLINE VERIFIED / OWNER ACCEPTANCE PENDING
+## v0.9.x — OWNER ACCEPTED / COMPLETE
 
-The local worktree implements bounded sequential `search_many()` execution, typed per-query outcomes, positional identity evidence, exact interquery deduplication of verified Google Place IDs and separate seven-column CSV/XLSX exports. A narrow owner-authorized identity investigation supported P92; it was not general live acceptance. G23 remains pending separate owner authorization. No field merge, heuristic matching, persistence, campaigns, concurrency or new sources are part of this line.
+The accepted implementation provides bounded sequential `search_many()` execution, typed per-query outcomes, positional identity evidence, exact interquery deduplication of verified Google Place IDs and separate seven-column CSV/XLSX exports. P91–P96 and G01–G22 passed offline. The narrow P92 identity study was distinct from the owner's two later full CLI batches, which are accepted as **G23 PASS / OWNER LIVE ACCEPTED**. The owner accepts that `UNVERIFIED` observations remain exportable and may yield apparent commercial duplicates. No field merge, heuristic matching, persistence, campaigns, concurrency or new sources are part of this line. This is a development-cycle closure, not a release.
 
-## v1.0.0 — TARGET_V1_0
+## v1.0.0 — NEXT / FINAL HARDENING AND STABLE RELEASE
 
-The first complete and stable release should provide a stable CLI, stable Engine contract, documented current behavior, regression safety, appropriate error/configuration semantics and extraction-ready internal architecture. Physical extraction into a separate package is not required before `v1.0.0`.
+The next phase is limited to final hardening, stability, contract freeze, final validation, user documentation, packaging/distribution and preparation of the first stable CLI release. An `.exe` or installer may be considered during that phase, but neither exists by this closure. Physical Engine extraction and API consumers remain post-v1 possibilities, not prerequisites for the CLI's first stable release.
 
 ## Post-v1 — POST_V1
 

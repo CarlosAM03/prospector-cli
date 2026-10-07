@@ -1,6 +1,6 @@
 # Architecture
 
-This document separates the architecture implemented in the local worktree from future direction. v0.9.x is verified offline and awaits owner acceptance; its general live acceptance gate remains pending.
+This document separates the accepted v0.9.x architecture from future direction. The owner accepted the implementation baseline `c7193d55a36618e934e29a9678b3f9b01e9b6543` and later full CLI live batches as G23 evidence. This closes v0.9.x development, not a tag or release.
 
 ## Architectural Philosophy
 
@@ -89,6 +89,8 @@ The `search_businesses(query, limit)` function remains a transitional compatibil
 
 `src/engines/batch/` owns pure export selection. It compares only verified `(source, kind, value)` identities from earlier queries, keeps unknowns and intraconsulta repetitions, and never merges fields or changes a `SearchResult`. Source evidence is a private 1:1 sidecar, not a thirteenth business field. A controlled typed query failure can be recorded as `FAILED`; unexpected errors or untrusted cleanup interrupt with a completed prefix. The batch has no persisted identity index or global browser lock.
 
+The v0.9.x deduplication guarantee applies only when both observations have verified Google Maps identity under P92. An `UNVERIFIED` observation remains exportable even when it appears commercially equivalent to another. The owner accepted this possible false negative; text similarity, name, address, phone, email, website and domain are not substitute identities.
+
 `src/engines/website/` contains crawling, parsing, extraction, email extraction, language detection and metadata construction. Basic status/final URL, title, description, language and email behavior is covered by controlled tests. Contact/about flags and effective `content_type` output remain incomplete.
 
 `ExportService` consumes `SearchResult` and writes CSV/XLSX. It is reusable application/export infrastructure, outside extraction core and not CLI-only.
@@ -132,10 +134,10 @@ The v0.7.x boundary means the Engine owns reusable prospecting orchestration; th
 
 ## Version boundaries
 
-- `v0.7.x` — `TARGET_V0_7_X`: Google Maps stability, configuration boundary, browser lifecycle, logging separation, error/partial semantics, internal Engine facade and CLI adapter.
-- `v0.8.x` — `CURRENT, OWNER_ACCEPTANCE_PENDING`: deterministic field normalization after extraction/enrichment, verified offline.
-- `v0.9.x` — `CURRENT, OFFLINE_VERIFIED / OWNER_ACCEPTANCE_PENDING`: bounded sequential batch, verified-identity interquery selection, safe failures and independent exports. No field merge or historical matching.
-- `v1.0.0` — `TARGET_V1_0`: stable CLI/Engine contracts, documented behavior, regression safety and extraction-ready architecture.
+- `v0.7.x` — `ACCEPTED BASELINE`: Google Maps stability, configuration boundary, browser lifecycle, logging separation, error/partial semantics, internal Engine facade and CLI adapter.
+- `v0.8.x` — `OWNER ACCEPTED / COMPLETE`: deterministic field normalization after extraction/enrichment. The owner's functional acceptance retained the historical N31 caveat: paired live inspection of original and normalized views was not performed; the invariants passed offline.
+- `v0.9.x` — `OWNER ACCEPTED / COMPLETE`: bounded sequential batch, verified-identity interquery selection, safe failures and independent exports; G01–G22 passed offline and G23 was owner live accepted. No field merge or historical matching.
+- `v1.0.0` — `NEXT / TARGET_V1_0`: final hardening, contract freeze, validation, packaging and first stable CLI release preparation; not yet implemented or released.
 - post-v1 — `POST_V1`: possible physical Engine packaging/extraction, more sources/exporters or distributed execution.
 
 Prospector CLI does not implement SaaS, a web API, CRM/ERP, a DATRA backend, jobs or distributed execution.

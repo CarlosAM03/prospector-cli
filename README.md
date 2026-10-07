@@ -27,11 +27,11 @@ search_businesses(query: SearchQuery, limit: int = 50) -> SearchResult
 
 This wrapper remains transitional and preserves its default of 50, including the legacy nonpositive-limit behavior and requests above 100. The CLI calls `ProspectorEngine` with an optional limit: Enter selects 50, and valid requests are 1 through 100. The owner approved 100 as the Google Maps Engine maximum; larger or invalid requests are rejected before Chromium starts, without clamping. This operational policy is not a statistical guarantee of capacity.
 
-Both supported search entrypoints normalize after source enrichment. `result.businesses` contains independent `NormalizedBusiness` objects; `result.original_businesses` retains the consolidated `Business` objects in matching order. `result.total_found` counts extracted businesses, and `result.issues` includes source and recoverable normalization issues. The CLI displays and exports the normalized view. Normalization is local and deterministic; no live Google Maps acceptance has been performed for this version.
+Both supported single-search entrypoints normalize after source enrichment. `result.businesses` contains independent `NormalizedBusiness` objects; `result.original_businesses` retains the consolidated `Business` objects in matching order. `result.total_found` counts extracted businesses, and `result.issues` includes source and recoverable normalization issues. The CLI displays and exports the normalized view. Normalization is local and deterministic.
 
 Businesses may remain partially enriched when detail-panel or website inspection cannot provide every field. Website inspection currently covers basic status/final URL, title, description, language and email extraction. Contact/about detection and effective `content_type` output remain incomplete.
 
-The local v0.9.x worktree also provides `ProspectorEngine.search_many()` for 1–5 ordered `BatchQuery` requests and a CLI `Multiple Searches` path for 2–3 requests. Each query has its own limit and browser lifecycle. `BatchSearchResult.entries` retain complete individual results, safe failures, counts and per-observation provenance. A verified, namespaced Google Place ID can suppress an observation only in a *later* query; unknown identity and repetitions within one query remain exportable. Batch CSV/XLSX files are separate per valid query, including a header-only file when all rows were suppressed. This implementation is offline-verified, not owner-accepted or released; the exceptional P92 identity study was not general live acceptance (G23 remains pending).
+The accepted v0.9.x implementation baseline `c7193d55a36618e934e29a9678b3f9b01e9b6543` also provides `ProspectorEngine.search_many()` for 1–5 ordered `BatchQuery` requests and a CLI `Multiple Searches` path for 2–3 requests. Each query has its own limit and browser lifecycle. `BatchSearchResult.entries` retain complete individual results, safe failures, counts and per-observation provenance. A verified, namespaced Google Place ID can suppress an observation only in a *later* query; `UNVERIFIED` identity and repetitions within one query remain exportable. Batch CSV/XLSX files are separate per valid query, including a header-only file when all rows were suppressed. The owner accepted P91–P96, the offline regression and two subsequent full CLI batches as G23 live evidence. v0.9.x is **OWNER ACCEPTED / COMPLETE**, not tagged or released. Apparent commercial duplicates may remain when identity is `UNVERIFIED`; this is an accepted limitation, not a reason to apply text matching.
 
 ## Philosophy
 
@@ -50,7 +50,7 @@ The project is guided by:
 - extensibility for future source strategies;
 - configuration over hardcoded execution behavior as the architecture evolves.
 
-Some of that direction is already represented by current modules; some is the target toward `v1.0.0`. Formal normalization and bounded, exact interquery deduplication are implemented in the local worktree. General validation, heuristic matching, persistence and configuration profiles are not.
+Some of that direction is already represented by current modules; some is the target toward `v1.0.0`. Formal normalization and bounded, exact interquery deduplication are implemented. General validation, heuristic matching, persistence and configuration profiles are not.
 
 ## Installation
 
@@ -121,7 +121,7 @@ CLI adapter -> ProspectorEngine(config) -> extraction -> normalization -> Search
                                                                      +-> ExportService -> CSV/XLSX
 ```
 
-`EngineConfig` and `ProspectorEngine` are integrated with the CLI under the owner-approved Google Maps maximum of 100. The wrapper remains the legacy programmatic path with the same mandatory normalization stage. Offline tests cover the feed/detail/website flow, both normalized result routes and the v0.9.x bounded batch path. The owner completed two manual CLI searches and CSV/XLSX exports at limits 75 and 50 on the v0.7.x baseline; these demonstrate operation for those queries, not v0.9.x live acceptance, catalog completeness or universal reliability. Batch execution and exact interquery selection are CURRENT in the local worktree; field merge, heuristic matching and persistence are outside v0.9.x. Physical extraction into a separately packaged Engine is a post-v1 possibility, not a prerequisite for `v1.0.0`.
+`EngineConfig` and `ProspectorEngine` are integrated with the CLI under the owner-approved Google Maps maximum of 100. The wrapper remains the legacy programmatic path with the same mandatory normalization stage. Offline tests cover the feed/detail/website flow, both normalized result routes and the v0.9.x bounded batch path. The earlier two single-search manual exports at limits 75 and 50 belonged to the v0.7.x baseline; the owner's two later three-query CLI batches supplied v0.9.x G23 evidence. Those observations do not prove catalog completeness or universal reliability. Batch execution and exact interquery selection are CURRENT; field merge, heuristic matching and persistence are outside v0.9.x. v1.0.0 is next for final hardening and stable-release preparation; physical extraction into a separately packaged Engine is a post-v1 possibility.
 
 ## Project evolution
 
