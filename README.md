@@ -6,7 +6,7 @@ Prospector CLI is an independent open-source Python CLI for extracting structure
 
 The project is not a SaaS, web API, CRM, ERP, DATRA backend or distributed platform. Other applications may consume its results, but those applications are outside this repository.
 
-The v1.0.0 source and Windows portable candidate are **owner accepted**. The independent freeze audit is pending; no stable tag, GitHub Release or public ZIP has been published yet.
+Prospector CLI v1.0.0 is **owner accepted and frozen**. The final repository freeze audit passed. The tag and GitHub Release have not yet been published; the Windows ZIP will be available from GitHub Releases after publication.
 
 ## Download and portable quick start
 
@@ -60,7 +60,7 @@ The project is guided by:
 - extensibility for future source strategies;
 - configuration over hardcoded execution behavior as the architecture evolves.
 
-The current modules implement the v1.0.0 CLI release-candidate scope. General validation, heuristic matching, persistence and configuration profiles are not included.
+The current modules implement the frozen v1.0.0 CLI scope. General validation, heuristic matching, persistence and configuration profiles are not included.
 
 ## Source quick start
 
@@ -77,7 +77,7 @@ If `venv/` already exists, activate it and rerun the requirements install after 
 
 The v1.0.0 runtime uses installed Microsoft Edge Stable via Playwright 1.61.0 `channel="msedge"` in both source and Windows portable execution. The portable includes Python and application dependencies but no browser executable; users do not need Python, a repository checkout, or `playwright install`. Edge Stable is an external prerequisite. Edge enterprise policies, mandatory extensions, proxies or organizational controls may interfere with automation. The earlier Chromium audit/regression checkpoint is historical, not the v1.0.0 runtime policy.
 
-The CLI defaults to Visible mode; Background remains available. The candidate was validated on the primary Windows development host, including relocated portable execution. Separate clean-machine validation was deferred by explicit owner decision to post-release compatibility testing; environment-specific Windows or Edge issues may still be found. See [Windows portable guidance](docs/portable-windows.md).
+The CLI defaults to Visible mode; Background remains available. The release was validated on the primary Windows development host, including relocated portable execution. Separate clean-machine validation was deferred by explicit owner decision to post-release compatibility testing; environment-specific Windows or Edge issues may still be found. See [Windows portable guidance](docs/portable-windows.md) and the [freeze record](docs/releases/v1.0.0/FREEZE.md).
 
 ## Run the CLI
 
@@ -140,7 +140,7 @@ CLI adapter -> ProspectorEngine(config) -> extraction -> normalization -> Search
                                                                      +-> ExportService -> CSV/XLSX
 ```
 
-`EngineConfig` and `ProspectorEngine` are integrated with the CLI under the owner-approved Google Maps maximum of 100. The wrapper remains the legacy programmatic path with the same mandatory normalization stage. Offline tests cover the feed/detail/website flow, both normalized result routes and the v0.9.x bounded batch path. The earlier two single-search manual exports at limits 75 and 50 belonged to the v0.7.x baseline; the owner's two later three-query CLI batches supplied v0.9.x G23 evidence. Those observations do not prove catalog completeness or universal reliability. Batch execution and exact interquery selection are CURRENT; field merge, heuristic matching and persistence remain outside v1.0.0. Final hardening, portable packaging and owner acceptance are complete; independent freeze audit and publication remain pending. Physical extraction into a separately packaged Engine is a post-v1 possibility.
+`EngineConfig` and `ProspectorEngine` are integrated with the CLI under the owner-approved Google Maps maximum of 100. The wrapper remains the legacy programmatic path with the same mandatory normalization stage. Offline tests cover the feed/detail/website flow, both normalized result routes and the v0.9.x bounded batch path. The earlier two single-search manual exports at limits 75 and 50 belonged to the v0.7.x baseline; the owner's two later three-query CLI batches supplied v0.9.x G23 evidence. Those observations do not prove catalog completeness or universal reliability. Batch execution and exact interquery selection are CURRENT; field merge, heuristic matching and persistence remain outside v1.0.0. Final hardening, portable packaging, owner acceptance and the independent freeze audit are complete; tag and release publication remain pending. Physical extraction into a separately packaged Engine is a post-v1 possibility.
 
 ## Project evolution
 
@@ -153,7 +153,7 @@ previous extraction and reusable-components work
         -> v0.7.x stability and decoupling
         -> v0.8.x normalization
         -> v0.9.x multi-input and deduplication
-        -> v1.0.0 CLI (owner accepted; freeze audit pending)
+        -> v1.0.0 CLI (owner accepted; frozen; publication pending)
         -> post-v1 packaging/consumer possibilities
 ```
 
