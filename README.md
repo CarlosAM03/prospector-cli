@@ -6,11 +6,11 @@ Prospector CLI is an independent open-source Python CLI for extracting structure
 
 The project is not a SaaS, web API, CRM, ERP, DATRA backend or distributed platform. Other applications may consume its results, but those applications are outside this repository.
 
-Prospector CLI v1.0.0 is **owner accepted and frozen**. The final repository freeze audit passed. The tag and GitHub Release have not yet been published; the Windows ZIP will be available from GitHub Releases after publication.
+Prospector CLI v1.0.0 is the **first stable release**. Owner acceptance is complete, the final freeze audit passed, and tag `v1.0.0` and the GitHub Release are published. The supported Windows portable is available from [GitHub Releases](https://github.com/CarlosAM03/prospector-cli/releases/tag/v1.0.0).
 
 ## Download and portable quick start
 
-Packaged Windows releases will be available from this repository's GitHub Releases page after publication. The planned asset is `Prospector-CLI-v1.0.0-win64.zip`; there is no direct public download link yet. The accepted ZIP is currently a local owner-tested artifact, not a file committed to Git.
+Download [`Prospector-CLI-v1.0.0-win64.zip`](https://github.com/CarlosAM03/prospector-cli/releases/download/v1.0.0/Prospector-CLI-v1.0.0-win64.zip) from the [v1.0.0 release](https://github.com/CarlosAM03/prospector-cli/releases/tag/v1.0.0). The supported portable is a release asset, not a repository file. GitHub-generated “Source code” archives are source snapshots and are not the Windows portable. To verify the ZIP, compare its SHA-256 with `A219F5A2F9A060A16135B4A61DC3CDC940659111EEE1790933E30B7C50245C1C`.
 
 On Windows 10/11 x64, install Microsoft Edge Stable, extract the complete ZIP to a writable directory and run `prospector.exe`. Python and `playwright install` are not required for portable users. Visible is the default browser mode; Background is selectable. See [portable instructions](docs/portable-windows.md), [release notes](docs/releases/v1.0.0/RELEASE_NOTES.md) and [known limitations](docs/releases/v1.0.0/KNOWN_LIMITATIONS.md).
 
@@ -132,7 +132,7 @@ Use Windows x64, a build environment with `requirements.txt`, `requirements-dev.
 
 `BrowserRuntime` owns Playwright/browser lifecycle for each search. The Google Maps pipeline owns source-specific extraction, while reusable components use module logging for diagnostics. `SearchResult.issues` and fatal `ProspectorError` categories provide the approved Error Model. A bounded feed stall preserves valid Businesses and records an issue; a verifiable source end would return available Businesses without a stall issue. No reliable live empty/end marker has been established.
 
-The approved target is:
+The implemented and frozen v1.0.0 pipeline is:
 
 ```text
 CLI adapter -> ProspectorEngine(config) -> extraction -> normalization -> SearchResult
@@ -140,7 +140,7 @@ CLI adapter -> ProspectorEngine(config) -> extraction -> normalization -> Search
                                                                      +-> ExportService -> CSV/XLSX
 ```
 
-`EngineConfig` and `ProspectorEngine` are integrated with the CLI under the owner-approved Google Maps maximum of 100. The wrapper remains the legacy programmatic path with the same mandatory normalization stage. Offline tests cover the feed/detail/website flow, both normalized result routes and the v0.9.x bounded batch path. The earlier two single-search manual exports at limits 75 and 50 belonged to the v0.7.x baseline; the owner's two later three-query CLI batches supplied v0.9.x G23 evidence. Those observations do not prove catalog completeness or universal reliability. Batch execution and exact interquery selection are CURRENT; field merge, heuristic matching and persistence remain outside v1.0.0. Final hardening, portable packaging, owner acceptance and the independent freeze audit are complete; tag and release publication remain pending. Physical extraction into a separately packaged Engine is a post-v1 possibility.
+`EngineConfig` and `ProspectorEngine` are integrated with the CLI under the owner-approved Google Maps maximum of 100. The wrapper remains the legacy programmatic path with the same mandatory normalization stage. Offline tests cover the feed/detail/website flow, both normalized result routes and the v0.9.x bounded batch path. The earlier two single-search manual exports at limits 75 and 50 belonged to the v0.7.x baseline; the owner's two later three-query CLI batches supplied v0.9.x G23 evidence. Those observations do not prove catalog completeness or universal reliability. Batch execution and exact interquery selection are CURRENT; field merge, heuristic matching and persistence remain outside v1.0.0. v1.0.0 is stable and released; final hardening, portable packaging, owner acceptance and the independent freeze audit are complete. Physical extraction into a separately packaged Engine is a post-v1 possibility.
 
 ## Project evolution
 
@@ -153,7 +153,7 @@ previous extraction and reusable-components work
         -> v0.7.x stability and decoupling
         -> v0.8.x normalization
         -> v0.9.x multi-input and deduplication
-        -> v1.0.0 CLI (owner accepted; frozen; publication pending)
+        -> v1.0.0 CLI — STABLE / RELEASED / COMPLETE
         -> post-v1 packaging/consumer possibilities
 ```
 
@@ -161,6 +161,7 @@ previous extraction and reusable-components work
 
 - [Architecture](docs/architecture.md), [Google Maps pipeline](docs/pipelines/google_maps.md) and [scripting pipeline](docs/scripting-pipeline.md)
 - [Portable Windows guide](docs/portable-windows.md), [release notes](docs/releases/v1.0.0/RELEASE_NOTES.md) and [known limitations](docs/releases/v1.0.0/KNOWN_LIMITATIONS.md)
+- [Release closure](docs/releases/v1.0.0/RELEASED.md) and [freeze record](docs/releases/v1.0.0/FREEZE.md)
 - [Contributing](docs/contributing.md), [tests](tests/README.md), [roadmap](docs/roadmap.md) and [tracked engineering history](docs/history/README.md)
 
 ## Scope

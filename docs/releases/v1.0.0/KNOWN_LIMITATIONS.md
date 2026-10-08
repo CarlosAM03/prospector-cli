@@ -9,4 +9,4 @@ These are accepted scope or environmental limits, not a claim of a release defec
 - No persistence, checkpoint/resume, auto-update, API, SaaS or background job system is included. Confirmed Ctrl+C discards unexported execution state after verified cleanup; forced console closure offers only best-effort cleanup.
 - A separate clean/isolated Windows-machine validation was not performed. The owner waived R08 for this initial release and deferred external-host compatibility testing until after publication. Machine-specific Windows/Edge issues may therefore require later patch maintenance.
 
-The owner accepted this scope at R20, and the independent repository freeze audit passed. A GitHub tag/release and public ZIP upload remain pending separate publication authorization.
+The owner accepted this scope at R20. The repository freeze audit passed, and Prospector CLI v1.0.0 is published as a stable GitHub Release.

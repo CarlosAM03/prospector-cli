@@ -1,12 +1,12 @@
 # Prospector CLI v1.0.0 — Final Repository Freeze
 
-**Status: FROZEN / APPROVED FOR PUBLICATION**
+**Status: FROZEN / STABLE / RELEASED**
 
 **Final freeze audit: PASS**
 
 **R20: OWNER ACCEPTED**
 
-This record is the canonical pre-publication status. The source, public contracts, CLI, exports, dependencies, packaging policy, tests and documentation are frozen. Publication still requires its separately authorized tag and GitHub Release process.
+This record began as the canonical pre-publication freeze record. The source, public contracts, CLI, exports, dependencies, packaging policy, tests and documentation remain frozen. The publication closure below records the completed release.
 
 ## Repository identity
 
@@ -68,6 +68,24 @@ Microsoft Edge Stable is a required external prerequisite. No browser executable
 
 The accepted ZIP is not stored in Git and must not be rebuilt or altered as part of this freeze declaration.
 
-## Publication state
+## Publication closure
 
-Source freeze and owner acceptance are complete. **Tag: pending. GitHub Release: pending. Public ZIP upload: pending.** The tag and Release are not created by this record. Publication must follow separate owner authorization and verify this frozen branch SHA.
+Release status: **STABLE / RELEASED**
+
+Tag: `v1.0.0`
+
+Tag object: `35088b4d53c31bb4fdde6c079b5e3d2f31873a32`
+
+Frozen tagged source: `bd50cf7cbba76ccd75517d06037662dff4797b05`
+
+GitHub Release: [Prospector CLI v1.0.0](https://github.com/CarlosAM03/prospector-cli/releases/tag/v1.0.0)
+
+Release ID: `407174696`
+
+Portable: `Prospector-CLI-v1.0.0-win64.zip`
+
+Size: `53,658,917 bytes`
+
+SHA-256: `A219F5A2F9A060A16135B4A61DC3CDC940659111EEE1790933E30B7C50245C1C`
+
+Publication: **COMPLETE**
