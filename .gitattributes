@@ -1,0 +1,2 @@
+# Historical Markdown retains its original two-space hard line breaks.
+docs/history/** whitespace=-blank-at-eol

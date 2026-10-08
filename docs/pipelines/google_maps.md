@@ -67,9 +67,9 @@ When a website is available, the scraper delegates inspection to Website Engine.
 
 Live execution is externally variable. Controlled offline tests cover state, progress, identity, optional enrichment, 100-candidate collection and runtime cleanup. In the single authorized C05 pilot, requests for 3 and 10 Businesses returned that many summaries, but all detail attempts remained unverified; a 25-Business request reached the hard 180-second process timeout and stopped the pilot. After the corrective refactor, the owner completed manual searches and exports at limits 75 and 50 with recoverable issues. Those runs demonstrate an operational pipeline for the observed queries, without certifying capacity at 100 or a reliable empty-state marker. Browser lifecycle belongs to `BrowserRuntime`; Engine fatal boundaries use typed exceptions, while the legacy wrapper retains historical behavior.
 
-## Target — TARGET_V0_7_X / TARGET_V1_0
+## Implemented stabilization boundary — CURRENT
 
-The stabilization line aims to make this source pipeline a consumer of reusable runtime, configuration and error boundaries behind `ProspectorEngine`. It does not require formal page pagination or physical Engine extraction before `v1.0.0`.
+The stabilization line made this source pipeline a consumer of reusable runtime, configuration and error boundaries behind `ProspectorEngine`. It did not require formal page pagination or physical Engine extraction for `v1.0.0`.
 
 ## Relationship with the global architecture
 

@@ -1,12 +1,20 @@
 # Prospector CLI
 
+## What is Prospector CLI?
+
 Prospector CLI is an independent open-source Python CLI for extracting structured business information from public sources. The current implementation is CLI-first and centered on a Google Maps pipeline.
 
 The project is not a SaaS, web API, CRM, ERP, DATRA backend or distributed platform. Other applications may consume its results, but those applications are outside this repository.
 
-The v1.0.0 source and Windows portable release candidate are implemented and verified offline. Final owner acceptance (R20) is pending; no stable release, tag or public ZIP has been published.
+The v1.0.0 source and Windows portable candidate are **owner accepted**. The independent freeze audit is pending; no stable tag, GitHub Release or public ZIP has been published yet.
 
-## Current behavior
+## Download and portable quick start
+
+Packaged Windows releases will be available from this repository's GitHub Releases page after publication. The planned asset is `Prospector-CLI-v1.0.0-win64.zip`; there is no direct public download link yet. The accepted ZIP is currently a local owner-tested artifact, not a file committed to Git.
+
+On Windows 10/11 x64, install Microsoft Edge Stable, extract the complete ZIP to a writable directory and run `prospector.exe`. Python and `playwright install` are not required for portable users. Visible is the default browser mode; Background is selectable. See [portable instructions](docs/portable-windows.md), [release notes](docs/releases/v1.0.0/RELEASE_NOTES.md) and [known limitations](docs/releases/v1.0.0/KNOWN_LIMITATIONS.md).
+
+## v1.0.0 capabilities
 
 ```text
 CLI input
@@ -54,7 +62,7 @@ The project is guided by:
 
 The current modules implement the v1.0.0 CLI release-candidate scope. General validation, heuristic matching, persistence and configuration profiles are not included.
 
-## Installation
+## Source quick start
 
 Create and activate a virtual environment using a Python version available in your environment:
 
@@ -74,7 +82,7 @@ The CLI defaults to Visible mode; Background remains available. The candidate wa
 ## Run the CLI
 
 ```powershell
-python src/main.py
+.\venv\Scripts\python.exe src\main.py
 ```
 
 The CLI asks for keyword, location and an optional limit (default 50, maximum 100). It presents recoverable issues and offers CSV/XLSX export after a successful search. The programmatic `search_businesses` wrapper remains available with its legacy behavior.
@@ -95,25 +103,30 @@ Install development dependencies separately:
 python -m pip install -r requirements-dev.txt
 ```
 
-Run the deterministic and controlled regression baseline:
+Run the deterministic and controlled regression baseline from the repository root. Use a unique `%TEMP%` basetemp on Windows; do not use a fixed `temp/audit_runtime` directory:
 
 ```powershell
-python -m compileall -q src
-python -m pytest --collect-only -q
-python -m pytest tests\unit -q
-python -m pytest tests\integration -q
-python -m pytest -q
+Remove-Item Env:PROSPECTOR_RUN_E2E -ErrorAction SilentlyContinue
+$base = Join-Path $env:TEMP ("prospector-v100-" + [guid]::NewGuid().ToString("N"))
+.\venv\Scripts\python.exe -m compileall -q src
+.\venv\Scripts\python.exe -m pytest tests\unit -q -m "not e2e" --basetemp="${base}-unit"
+.\venv\Scripts\python.exe -m pytest tests\integration -q -m "not e2e" --basetemp="${base}-integration"
+.\venv\Scripts\python.exe -m pytest -q -m "not e2e" --basetemp="${base}-all"
 ```
 
 The default suite does not require Internet and does not reach Google Maps. Controlled browser integration uses localhost; the live Google Maps check is opt-in:
 
 ```powershell
 $env:PROSPECTOR_RUN_E2E = "1"
-python -m pytest -m e2e -q
+.\venv\Scripts\python.exe -m pytest -m e2e -q
 Remove-Item Env:PROSPECTOR_RUN_E2E
 ```
 
-See `tests/README.md` and `docs/contributing.md` for the test policy and contributor checks.
+See [test policy](tests/README.md) and [contributing](docs/contributing.md) for contributor checks.
+
+## Rebuild the Windows portable
+
+Use Windows x64, a build environment with `requirements.txt`, `requirements-dev.txt` and `requirements-build.txt` installed, and run `scripts/build_windows_portable.py` with that environment's Python. It creates an unzipped PyInstaller `onedir` under ignored `temp/b-*`; inspect the resulting license/notices and package, then ZIP the `Prospector-CLI-v1.0.0-win64` folder for an authorized release workflow. The builder does **not** bundle Edge; installed Microsoft Edge Stable is required at runtime. See [contributor build guidance](docs/contributing.md) and [portable instructions](docs/portable-windows.md). Do not treat a new build as byte-identical to the owner-accepted ZIP without measuring its hash.
 
 ## Architecture direction
 
@@ -127,7 +140,7 @@ CLI adapter -> ProspectorEngine(config) -> extraction -> normalization -> Search
                                                                      +-> ExportService -> CSV/XLSX
 ```
 
-`EngineConfig` and `ProspectorEngine` are integrated with the CLI under the owner-approved Google Maps maximum of 100. The wrapper remains the legacy programmatic path with the same mandatory normalization stage. Offline tests cover the feed/detail/website flow, both normalized result routes and the v0.9.x bounded batch path. The earlier two single-search manual exports at limits 75 and 50 belonged to the v0.7.x baseline; the owner's two later three-query CLI batches supplied v0.9.x G23 evidence. Those observations do not prove catalog completeness or universal reliability. Batch execution and exact interquery selection are CURRENT; field merge, heuristic matching and persistence remain outside the v1.0.0 candidate. Final hardening and portable packaging are implemented; owner acceptance and release publication remain pending. Physical extraction into a separately packaged Engine is a post-v1 possibility.
+`EngineConfig` and `ProspectorEngine` are integrated with the CLI under the owner-approved Google Maps maximum of 100. The wrapper remains the legacy programmatic path with the same mandatory normalization stage. Offline tests cover the feed/detail/website flow, both normalized result routes and the v0.9.x bounded batch path. The earlier two single-search manual exports at limits 75 and 50 belonged to the v0.7.x baseline; the owner's two later three-query CLI batches supplied v0.9.x G23 evidence. Those observations do not prove catalog completeness or universal reliability. Batch execution and exact interquery selection are CURRENT; field merge, heuristic matching and persistence remain outside v1.0.0. Final hardening, portable packaging and owner acceptance are complete; independent freeze audit and publication remain pending. Physical extraction into a separately packaged Engine is a post-v1 possibility.
 
 ## Project evolution
 
@@ -140,14 +153,28 @@ previous extraction and reusable-components work
         -> v0.7.x stability and decoupling
         -> v0.8.x normalization
         -> v0.9.x multi-input and deduplication
-        -> v1.0.0 release candidate (owner acceptance pending)
+        -> v1.0.0 CLI (owner accepted; freeze audit pending)
         -> post-v1 packaging/consumer possibilities
 ```
+
+## Documentation index
+
+- [Architecture](docs/architecture.md), [Google Maps pipeline](docs/pipelines/google_maps.md) and [scripting pipeline](docs/scripting-pipeline.md)
+- [Portable Windows guide](docs/portable-windows.md), [release notes](docs/releases/v1.0.0/RELEASE_NOTES.md) and [known limitations](docs/releases/v1.0.0/KNOWN_LIMITATIONS.md)
+- [Contributing](docs/contributing.md), [tests](tests/README.md), [roadmap](docs/roadmap.md) and [tracked engineering history](docs/history/README.md)
 
 ## Scope
 
 This repository focuses on obtaining structured prospect data from public sources. It does not implement CRM/ERP, customer or user management, marketing automation, sales workflows, dashboards, analytics, persistence, jobs or distributed execution.
 
-## Contributing and license
+## Known limitations
 
-Read `docs/contributing.md` before contributing. The project license is in `LICENSE`.
+See [v1.0.0 known limitations](docs/releases/v1.0.0/KNOWN_LIMITATIONS.md), including the Edge prerequisite, verified-only deduplication, recoverable partial results and owner-waived clean-machine gate.
+
+## Contributing
+
+Read [contributing](docs/contributing.md) before changing code or documentation.
+
+## License
+
+Prospector CLI is MIT-licensed; see [LICENSE](LICENSE). Distributed third-party notices are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
