@@ -374,40 +374,9 @@ def execute_multiple_searches() -> None:
 
 
 def main() -> None:
+    from cli_app import run_app
 
-    while True:
-
-        option = choose_main_option()
-
-
-        if option == "1":
-
-            execute_search()
-
-
-        elif option == "2":
-
-            execute_multiple_searches()
-
-
-        elif option == "3":
-
-            separator()
-
-            print(
-                "Closing Prospector CLI..."
-            )
-
-            separator()
-
-            break
-
-
-        else:
-
-            print(
-                "\nInvalid option."
-            )
+    run_app()
 
 
 

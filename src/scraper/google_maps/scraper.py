@@ -4,6 +4,7 @@ import time
 from dataclasses import dataclass, field
 
 from engines.browser_runtime import BrowserRuntime
+from engines._observability import ExecutionEvent, emit
 from engines.errors import (
     ProspectorExtractionError,
     ProspectorNavigationError,
@@ -69,14 +70,17 @@ def _run_google_maps(
     metrics_sink: dict | None = None,
 ) -> _SourceResult:
     """Single source pipeline supplied with execution settings."""
+    def record_metric(name: str, value) -> None:
+        if metrics_sink is not None:
+            metrics_sink[name] = value
+        emit(ExecutionEvent("metric_updated", name=name, value=value))
+
     start_time = time.perf_counter()
     collector = issue_collector if issue_collector is not None else IssueCollector()
     try:
         with BrowserRuntime(headless=headless) as runtime:
-            if metrics_sink is not None:
-                metrics_sink["browser_version"] = getattr(
-                    runtime.browser, "version", None
-                )
+            record_metric("browser_version", getattr(runtime.browser, "version", None))
+            emit(ExecutionEvent("stage_started", "navigation"))
             stage_start = time.perf_counter()
             try:
                 page = create_search_page(
@@ -88,8 +92,9 @@ def _run_google_maps(
                         "Google Maps navigation did not reach a usable result view."
                     ) from error
                 raise
-            if metrics_sink is not None:
-                metrics_sink["navigation_seconds"] = time.perf_counter() - stage_start
+            record_metric("navigation_seconds", time.perf_counter() - stage_start)
+            emit(ExecutionEvent("stage_completed", "navigation"))
+            emit(ExecutionEvent("stage_started", "feed"))
             stage_start = time.perf_counter()
             try:
                 results = extract_businesses(
@@ -101,27 +106,31 @@ def _run_google_maps(
                         "Google Maps did not produce a verifiable result feed."
                     ) from error
                 raise
+            record_metric("feed_seconds", time.perf_counter() - stage_start)
+            record_metric("observed_candidates", len(results))
+            emit(ExecutionEvent("stage_completed", "feed"))
             if metrics_sink is not None:
-                metrics_sink["feed_seconds"] = time.perf_counter() - stage_start
-                metrics_sink["observed_candidates"] = len(results)
                 summary_fields = [
                     (item["business"].address, item["business"].phone,
                      item["business"].website)
                     for item in results
                 ]
+            emit(ExecutionEvent("stage_started", "detail"))
             stage_start = time.perf_counter()
             identities: list[SourceIdentityEvidence] = []
             businesses = _enrich_businesses(
                 page=page, results=results, issue_collector=collector,
                 identity_sink=identities,
             )
+            record_metric("detail_seconds", time.perf_counter() - stage_start)
+            emit(ExecutionEvent("stage_completed", "detail"))
             if metrics_sink is not None:
-                metrics_sink["detail_seconds"] = time.perf_counter() - stage_start
-                metrics_sink["detail_unchanged_count"] = sum(
+                record_metric("detail_unchanged_count", sum(
                     (business.address, business.phone, business.website) == before
                     for business, before in zip(businesses, summary_fields)
-                )
+                ))
             if website_enrichment:
+                emit(ExecutionEvent("stage_started", "website"))
                 before_website = tuple(id(business) for business in businesses)
                 stage_start = time.perf_counter()
                 businesses = enrich_websites(
@@ -130,17 +139,19 @@ def _run_google_maps(
                 )
                 if tuple(id(business) for business in businesses) != before_website:
                     raise ValueError("website enrichment changed source identity order")
-                if metrics_sink is not None:
-                    metrics_sink["website_seconds"] = time.perf_counter() - stage_start
+                record_metric("website_seconds", time.perf_counter() - stage_start)
+                emit(ExecutionEvent("stage_completed", "website"))
             # Runtime owns the Maps page and browser. WebsiteCrawler closes
             # each short-lived inspection page that it creates.
-        if metrics_sink is not None:
-            metrics_sink["cleanup_completed"] = True
+        record_metric("cleanup_completed", True)
     except (PlaywrightError, OSError) as error:
         if typed_errors:
-            raise ProspectorRuntimeError(
+            failure = ProspectorRuntimeError(
                 "The browser runtime could not complete the search."
-            ) from error
+            )
+            if getattr(error, "_prospector_cleanup_failed", False):
+                failure._prospector_cleanup_failed = True
+            raise failure from error
         raise
     return _SourceResult(
         query=query,
@@ -156,7 +167,7 @@ def _enrich_businesses(
     identity_sink: list[SourceIdentityEvidence] | None = None,
 ) -> list[Business]:
     businesses: list[Business] = []
-    for result in results:
+    for index, result in enumerate(results, 1):
         capture: dict = {}
         business = enrich_business(
             page=page,
@@ -173,4 +184,5 @@ def _enrich_businesses(
             identity_sink.append(verified_place_identity(
                 result["href"], capture.get("verified_selected_url"),
             ))
+        emit(ExecutionEvent("progress_updated", "detail", current=index, total=len(results)))
     return businesses

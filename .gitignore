@@ -31,3 +31,5 @@ maps_debug.html
 *.csv
 *.xlsx
 temp/
+logs/
+.pytest_cache/

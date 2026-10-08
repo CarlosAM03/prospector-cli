@@ -4,6 +4,7 @@ from collections.abc import Sequence
 import time
 
 from engines.config import EngineConfig, GOOGLE_MAPS_ENGINE_MAX_LIMIT, resolve_limit
+from engines._observability import ExecutionEvent, emit
 from engines.batch import select_batch_exports
 from engines.errors import (
     BatchInterruptedError, ProspectorConfigurationError, ProspectorExtractionError,
@@ -76,6 +77,8 @@ class ProspectorEngine:
         started = time.perf_counter()
         entries: list[BatchQueryResult] = []
         for query_index, request in enumerate(requests):
+            emit(ExecutionEvent("execution_started", "query", query_index=query_index))
+            emit(ExecutionEvent("metric_updated", name="requested_limit", value=request.limit, query_index=query_index))
             query_started = time.perf_counter()
             try:
                 execution = execute_global_search_with_identities(
@@ -113,9 +116,15 @@ class ProspectorEngine:
                     ],
                     observations=observations, execution_time=result.execution_time,
                 )
+                emit(ExecutionEvent("stage_started", "deduplication", query_index=query_index))
                 entries = select_batch_exports(
                     BatchSearchResult([*entries, completed_entry]),
                 ).entries
+                emit(ExecutionEvent("stage_completed", "deduplication", query_index=query_index))
+                entry = entries[-1]
+                emit(ExecutionEvent("metric_updated", name="duplicates_suppressed", value=entry.suppressed_count, query_index=query_index))
+                emit(ExecutionEvent("metric_updated", name="exportable_businesses", value=entry.exportable_count, query_index=query_index))
+                emit(ExecutionEvent("execution_completed", "query", query_index=query_index))
             except (ProspectorNavigationError, ProspectorExtractionError) as error:
                 if getattr(error, "_prospector_cleanup_failed", False):
                     self._interrupt_batch(
@@ -131,12 +140,16 @@ class ProspectorEngine:
                     ),
                     execution_time=time.perf_counter() - query_started,
                 ))
+                emit(ExecutionEvent("execution_failed", "query", query_index=query_index))
             except Exception as error:
                 self._interrupt_batch(
                     entries, started, query_index, len(requests),
                     "critical_failure", error,
                 )
-        return BatchSearchResult(entries, time.perf_counter() - started)
+        result = BatchSearchResult(entries, time.perf_counter() - started)
+        emit(ExecutionEvent("metric_updated", name="batch_execution_seconds", value=result.execution_time))
+        emit(ExecutionEvent("execution_completed", "batch"))
+        return result
 
     @staticmethod
     def _interrupt_batch(
@@ -160,9 +173,18 @@ class ProspectorEngine:
             )
         except (ValueError, RuntimeError) as error:
             raise ProspectorConfigurationError(str(error)) from error
-        return execute_global_search(
-            _run_google_maps, query, limit,
-            headless=self.config.headless,
-            website_enrichment=self.config.website_enrichment,
-            typed_errors=True,
-        )
+        emit(ExecutionEvent("execution_started", "query"))
+        emit(ExecutionEvent("metric_updated", name="requested_limit", value=limit))
+        try:
+            result = execute_global_search(
+                _run_google_maps, query, limit,
+                headless=self.config.headless,
+                website_enrichment=self.config.website_enrichment,
+                typed_errors=True,
+            )
+        except Exception:
+            emit(ExecutionEvent("execution_failed", "query"))
+            raise
+        emit(ExecutionEvent("metric_updated", name="exportable_businesses", value=result.total_found))
+        emit(ExecutionEvent("execution_completed", "query"))
+        return result

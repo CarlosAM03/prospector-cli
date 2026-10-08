@@ -5,6 +5,7 @@ import re
 from exporters.csv import CsvExporter
 from exporters.excel import ExcelExporter
 from exporters.export_view import ExportSelection
+from services._export_directory import active_export_directory
 
 from models.batch import BatchQueryResult, QueryStatus
 from models.search_result import SearchResult
@@ -44,17 +45,37 @@ class ExportService:
             format
         ]
 
-        filename = build_output_filename(
+        base = re.sub(r"[^A-Za-z0-9._-]+", "_", build_output_filename(
             result.query,
             extension,
-        )
+        )).strip("._")
+
+        directory = active_export_directory()
+        if directory is not None:
+            directory.mkdir(parents=True, exist_ok=True)
+        root = directory or Path(".")
+        stem = Path(base).stem
+        suffix = Path(base).suffix
+        counter = 1
+        while True:
+            name = base if counter == 1 else f"{stem}_{counter}{suffix}"
+            target = root / name
+            try:
+                with open(target, "x", encoding="utf-8"):
+                    pass
+                break
+            except FileExistsError:
+                counter += 1
+
+        filename = str(target) if directory is not None else name
 
         exporter = exporter_class()
 
-        exporter.export(
-            result=result,
-            output_path=filename,
-        )
+        try:
+            exporter.export(result=result, output_path=filename)
+        except Exception:
+            target.unlink(missing_ok=True)
+            raise
 
         return filename
 
@@ -73,17 +94,22 @@ class ExportService:
         exporter_class, extension = EXPORTERS[format]
         base = build_output_filename(entry.result.query, extension)
         stem = re.sub(r"[^A-Za-z0-9._-]+", "_", Path(base).stem).strip("._")
-        filename = f"{stem}_{batch_id}_q{query_index:02d}.{extension}"
+        name = f"{stem}_{batch_id}_q{query_index:02d}.{extension}"
+        directory = active_export_directory()
+        if directory is not None:
+            directory.mkdir(parents=True, exist_ok=True)
+        target = (directory or Path(".")) / name
+        filename = str(target) if directory is not None else name
         selection = ExportSelection(
             entry.result.query,
             [entry.result.businesses[index] for index in entry.export_indices],
         )
         # Exclusive reservation prevents silent overwrite even with repeated queries.
-        with open(filename, "x", encoding="utf-8"):
+        with open(target, "x", encoding="utf-8"):
             pass
         try:
             exporter_class().export(result=selection, output_path=filename)
         except Exception:
-            Path(filename).unlink(missing_ok=True)
+            target.unlink(missing_ok=True)
             raise
         return filename

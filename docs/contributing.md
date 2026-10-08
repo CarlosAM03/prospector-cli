@@ -11,7 +11,7 @@ Use these distinctions when reviewing a change:
 - `TARGET_V0_8`, `TARGET_V0_9`, `TARGET_V1_0`: scope not yet implemented in an older checkpoint (check CURRENT first);
 - `DEFERRED_DESIGN`: approved problem whose exact technical contract is not selected yet.
 
-`EngineConfig`, `ProspectorEngine` and the approved public Error Model are present under the accepted v0.7.x technical baseline at `ee6b69e`. The owner-approved Google Maps Engine maximum is 100 and the CLI default is 50; changes to that policy need explicit approval. v0.8.x mandatory normalization and two public result views are owner accepted, with the historical N31 paired-live-inspection caveat. v0.9.x bounded sequential batch execution and exact verified-identity interquery selection are owner accepted on baseline `c7193d55a36618e934e29a9678b3f9b01e9b6543`; two later full CLI runs satisfied G23. `UNVERIFIED` observations remain exportable, even if they look commercially alike. Field merge, heuristic matching and historical/campaign deduplication remain outside current scope. v1.0.0 is next for final hardening and stable-release preparation, not yet released.
+`EngineConfig`, `ProspectorEngine` and the approved public Error Model are present under the accepted v0.7.x technical baseline at `ee6b69e`. The owner-approved Google Maps Engine maximum is 100 and the CLI default is 50; changes to that policy need explicit approval. v0.8.x mandatory normalization and two public result views are owner accepted, with the historical N31 paired-live-inspection caveat. v0.9.x bounded sequential batch execution and exact verified-identity interquery selection are owner accepted on baseline `c7193d55a36618e934e29a9678b3f9b01e9b6543`; two later full CLI runs satisfied G23. `UNVERIFIED` observations remain exportable, even if they look commercially alike. Field merge, heuristic matching and historical/campaign deduplication remain outside current scope. The v1.0.0 source and portable candidate is implemented and offline/current-host verified; owner acceptance and stable release remain pending.
 
 ## Project Philosophy
 
@@ -41,10 +41,12 @@ tests/performance/          benchmark area
 
 ## Validation
 
+Use the project's `venv\Scripts\python.exe` interpreter (or activate `venv\Scripts\Activate.ps1`) for source development. If an existing venv predates the current requirements, rerun both installs before testing; `Rich` is a runtime dependency, while PyInstaller is build-only.
+
 ```powershell
 python -m pip install -r requirements.txt
 python -m pip install -r requirements-dev.txt
-python -m playwright install chromium
+# Microsoft Edge Stable is the v1.0.0 browser prerequisite; no Playwright browser install.
 
 python -m compileall -q src
 python -m pytest --collect-only -q
@@ -53,7 +55,7 @@ python -m pytest tests\integration -q
 python -m pytest -q
 ```
 
-The default suite must not require Internet or reach Google Maps. The controlled Website Engine test uses localhost and local Chromium.
+The default suite must not require Internet or reach Google Maps. The controlled Website Engine test uses localhost. Production BrowserRuntime uses installed Microsoft Edge Stable through Playwright `channel="msedge"` for both modes.
 
 The live external check is opt-in:
 

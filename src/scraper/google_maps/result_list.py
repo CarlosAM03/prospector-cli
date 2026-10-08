@@ -6,6 +6,7 @@ import logging
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
 from engines._timing import remaining_ms
+from engines._observability import ExecutionEvent, emit
 from engines.selector.lazycharge import LazyChargeEngine
 from models.business import Business
 
@@ -47,6 +48,7 @@ def extract_businesses(page, limit: int, issue_collector=None) -> list[dict]:
     links = feed.locator(selector.selectors("results")[0])
     results: list[dict] = []
     seen_hrefs: set[str] = set()
+    observed_hrefs: set[str] = set()
     idle = 0
     attempts = 0
     stop_reason = "bounded_stall"
@@ -64,6 +66,12 @@ def extract_businesses(page, limit: int, issue_collector=None) -> list[dict]:
                 href = link.get_attribute(
                     "href", timeout=remaining_ms(deadline, 1000)
                 )
+                if href and href not in observed_hrefs:
+                    observed_hrefs.add(href)
+                    emit(ExecutionEvent(
+                        "metric_updated", name="maps_candidates_observed",
+                        value=len(observed_hrefs),
+                    ))
                 if not name or not href or href in seen_hrefs:
                     continue
 
@@ -84,6 +92,7 @@ def extract_businesses(page, limit: int, issue_collector=None) -> list[dict]:
                     name=name, category=category, address=address, phone=phone
                 ),
             })
+            emit(ExecutionEvent("progress_updated", "feed", current=len(results)))
             if len(results) >= limit:
                 logger.debug("Maps feed reached requested limit: count=%d", len(results))
                 return results
@@ -102,6 +111,9 @@ def extract_businesses(page, limit: int, issue_collector=None) -> list[dict]:
         except PlaywrightTimeoutError:
             stop_reason = "indeterminate_failure"
             break
+        # The scroll/observation call has returned; a confirmed CLI cancel
+        # can unwind the runtime here instead of waiting for the full feed.
+        emit(ExecutionEvent("checkpoint", "feed"))
         attempts += 1
 
     if not results:

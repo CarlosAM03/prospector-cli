@@ -1,6 +1,7 @@
 """Per-execution collection of approved public recoverable issues."""
 
 from models.search_issue import SearchIssue
+from engines._observability import ExecutionEvent, emit
 
 
 _MESSAGES = {
@@ -39,8 +40,7 @@ class IssueCollector:
         candidate: str | None = None,
         error: Exception | None = None,
     ) -> None:
-        self.items.append(
-            SearchIssue(
+        issue = SearchIssue(
                 stage=stage,
                 code=code,
                 message=_MESSAGES.get(
@@ -49,4 +49,5 @@ class IssueCollector:
                 candidate=candidate,
                 exception_type=type(error).__name__ if error else None,
             )
-        )
+        self.items.append(issue)
+        emit(ExecutionEvent("recoverable_issue_observed", stage=stage, name=code))

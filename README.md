@@ -4,6 +4,8 @@ Prospector CLI is an independent open-source Python CLI for extracting structure
 
 The project is not a SaaS, web API, CRM, ERP, DATRA backend or distributed platform. Other applications may consume its results, but those applications are outside this repository.
 
+The v1.0.0 source and Windows portable release candidate are implemented and verified offline. Final owner acceptance (R20) is pending; no stable release, tag or public ZIP has been published.
+
 ## Current behavior
 
 ```text
@@ -25,7 +27,7 @@ The current programmatic boundary is:
 search_businesses(query: SearchQuery, limit: int = 50) -> SearchResult
 ```
 
-This wrapper remains transitional and preserves its default of 50, including the legacy nonpositive-limit behavior and requests above 100. The CLI calls `ProspectorEngine` with an optional limit: Enter selects 50, and valid requests are 1 through 100. The owner approved 100 as the Google Maps Engine maximum; larger or invalid requests are rejected before Chromium starts, without clamping. This operational policy is not a statistical guarantee of capacity.
+This wrapper remains transitional and preserves its default of 50, including the legacy nonpositive-limit behavior and requests above 100. The CLI calls `ProspectorEngine` with an optional limit: Enter selects 50, and valid requests are 1 through 100. The owner approved 100 as the Google Maps Engine maximum; larger or invalid requests are rejected before browser startup, without clamping. This operational policy is not a statistical guarantee of capacity.
 
 Both supported single-search entrypoints normalize after source enrichment. `result.businesses` contains independent `NormalizedBusiness` objects; `result.original_businesses` retains the consolidated `Business` objects in matching order. `result.total_found` counts extracted businesses, and `result.issues` includes source and recoverable normalization issues. The CLI displays and exports the normalized view. Normalization is local and deterministic.
 
@@ -50,20 +52,24 @@ The project is guided by:
 - extensibility for future source strategies;
 - configuration over hardcoded execution behavior as the architecture evolves.
 
-Some of that direction is already represented by current modules; some is the target toward `v1.0.0`. Formal normalization and bounded, exact interquery deduplication are implemented. General validation, heuristic matching, persistence and configuration profiles are not.
+The current modules implement the v1.0.0 CLI release-candidate scope. General validation, heuristic matching, persistence and configuration profiles are not included.
 
 ## Installation
 
 Create and activate a virtual environment using a Python version available in your environment:
 
 ```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
+python -m venv venv
+.\venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
-python -m playwright install chromium
+# Microsoft Edge Stable must already be installed on Windows.
 ```
 
-The audit/regression checkpoint observed compatibility with Python 3.13.4, pytest 9.1.1 and Playwright 1.61.0/Chromium. This observation does not define the project's official Python compatibility policy.
+If `venv/` already exists, activate it and rerun the requirements install after pulling dependency changes. For source execution from VS Code, select `venv\Scripts\python.exe` as the interpreter and confirm it with `python -c "import sys; print(sys.executable)"`. PyInstaller is a build-only dependency in `requirements-build.txt`, not needed for source use.
+
+The v1.0.0 runtime uses installed Microsoft Edge Stable via Playwright 1.61.0 `channel="msedge"` in both source and Windows portable execution. The portable includes Python and application dependencies but no browser executable; users do not need Python, a repository checkout, or `playwright install`. Edge Stable is an external prerequisite. Edge enterprise policies, mandatory extensions, proxies or organizational controls may interfere with automation. The earlier Chromium audit/regression checkpoint is historical, not the v1.0.0 runtime policy.
+
+The CLI defaults to Visible mode; Background remains available. The candidate was validated on the primary Windows development host, including relocated portable execution. Separate clean-machine validation was deferred by explicit owner decision to post-release compatibility testing; environment-specific Windows or Edge issues may still be found. See [Windows portable guidance](docs/portable-windows.md).
 
 ## Run the CLI
 
@@ -99,7 +105,7 @@ python -m pytest tests\integration -q
 python -m pytest -q
 ```
 
-The default suite does not require Internet and does not reach Google Maps. The Website Engine integration test uses localhost and local Chromium. The live Google Maps check is opt-in:
+The default suite does not require Internet and does not reach Google Maps. Controlled browser integration uses localhost; the live Google Maps check is opt-in:
 
 ```powershell
 $env:PROSPECTOR_RUN_E2E = "1"
@@ -121,7 +127,7 @@ CLI adapter -> ProspectorEngine(config) -> extraction -> normalization -> Search
                                                                      +-> ExportService -> CSV/XLSX
 ```
 
-`EngineConfig` and `ProspectorEngine` are integrated with the CLI under the owner-approved Google Maps maximum of 100. The wrapper remains the legacy programmatic path with the same mandatory normalization stage. Offline tests cover the feed/detail/website flow, both normalized result routes and the v0.9.x bounded batch path. The earlier two single-search manual exports at limits 75 and 50 belonged to the v0.7.x baseline; the owner's two later three-query CLI batches supplied v0.9.x G23 evidence. Those observations do not prove catalog completeness or universal reliability. Batch execution and exact interquery selection are CURRENT; field merge, heuristic matching and persistence are outside v0.9.x. v1.0.0 is next for final hardening and stable-release preparation; physical extraction into a separately packaged Engine is a post-v1 possibility.
+`EngineConfig` and `ProspectorEngine` are integrated with the CLI under the owner-approved Google Maps maximum of 100. The wrapper remains the legacy programmatic path with the same mandatory normalization stage. Offline tests cover the feed/detail/website flow, both normalized result routes and the v0.9.x bounded batch path. The earlier two single-search manual exports at limits 75 and 50 belonged to the v0.7.x baseline; the owner's two later three-query CLI batches supplied v0.9.x G23 evidence. Those observations do not prove catalog completeness or universal reliability. Batch execution and exact interquery selection are CURRENT; field merge, heuristic matching and persistence remain outside the v1.0.0 candidate. Final hardening and portable packaging are implemented; owner acceptance and release publication remain pending. Physical extraction into a separately packaged Engine is a post-v1 possibility.
 
 ## Project evolution
 
@@ -134,7 +140,7 @@ previous extraction and reusable-components work
         -> v0.7.x stability and decoupling
         -> v0.8.x normalization
         -> v0.9.x multi-input and deduplication
-        -> v1.0.0 stable extraction-ready release
+        -> v1.0.0 release candidate (owner acceptance pending)
         -> post-v1 packaging/consumer possibilities
 ```
 
