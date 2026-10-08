@@ -11,7 +11,7 @@ Use these distinctions when reviewing a change:
 - `TARGET_V0_8`, `TARGET_V0_9`, `TARGET_V1_0`: scope not yet implemented in an older checkpoint (check CURRENT first);
 - `DEFERRED_DESIGN`: approved problem whose exact technical contract is not selected yet.
 
-`EngineConfig`, `ProspectorEngine` and the approved public Error Model are present under the accepted v0.7.x technical baseline at `ee6b69e`. The owner-approved Google Maps Engine maximum is 100 and the CLI default is 50; changes to that policy need explicit approval. v0.8.x mandatory normalization and two public result views are owner accepted, with the historical N31 paired-live-inspection caveat. v0.9.x bounded sequential batch execution and exact verified-identity interquery selection are owner accepted on baseline `c7193d55a36618e934e29a9678b3f9b01e9b6543`; two later full CLI runs satisfied G23. `UNVERIFIED` observations remain exportable, even if they look commercially alike. Field merge, heuristic matching and historical/campaign deduplication remain outside current scope. v1.0.0 is next for final hardening and stable-release preparation, not yet released.
+`EngineConfig`, `ProspectorEngine` and the approved public Error Model are present under the accepted v0.7.x technical baseline at `ee6b69e`. The owner-approved Google Maps Engine maximum is 100 and the CLI default is 50; changes to that policy need explicit approval. v0.8.x mandatory normalization and two public result views are owner accepted, with the historical N31 paired-live-inspection caveat. v0.9.x bounded sequential batch execution and exact verified-identity interquery selection are owner accepted on baseline `c7193d55a36618e934e29a9678b3f9b01e9b6543`; two later full CLI runs satisfied G23. `UNVERIFIED` observations remain exportable, even if they look commercially alike. Field merge, heuristic matching and historical/campaign deduplication remain outside current scope. The v1.0.0 source and portable release is implemented, owner accepted and frozen; its freeze audit passed. Tag and stable publication remain pending separate authorization. See [tracked history](history/README.md) and the [freeze record](releases/v1.0.0/FREEZE.md).
 
 ## Project Philosophy
 
@@ -41,29 +41,37 @@ tests/performance/          benchmark area
 
 ## Validation
 
-```powershell
-python -m pip install -r requirements.txt
-python -m pip install -r requirements-dev.txt
-python -m playwright install chromium
+Use the project's `venv\Scripts\python.exe` interpreter (or activate `venv\Scripts\Activate.ps1`) for source development. If an existing venv predates the current requirements, rerun both installs before testing; `Rich` is a runtime dependency, while PyInstaller is build-only.
 
-python -m compileall -q src
-python -m pytest --collect-only -q
-python -m pytest tests\unit -q
-python -m pytest tests\integration -q
-python -m pytest -q
+```powershell
+.\venv\Scripts\python.exe -m pip install -r requirements.txt
+.\venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+# Microsoft Edge Stable is the v1.0.0 browser prerequisite; no Playwright browser install.
+
+Remove-Item Env:PROSPECTOR_RUN_E2E -ErrorAction SilentlyContinue
+$base = Join-Path $env:TEMP ("prospector-v100-freeze-" + [guid]::NewGuid().ToString("N"))
+.\venv\Scripts\python.exe -m compileall -q src
+.\venv\Scripts\python.exe -m pytest tests\unit -q -m "not e2e" --basetemp="${base}-unit"
+.\venv\Scripts\python.exe -m pytest tests\integration -q -m "not e2e" --basetemp="${base}-integration"
+.\venv\Scripts\python.exe -m pytest -q -m "not e2e" --basetemp="${base}-all"
+git diff --check
 ```
 
-The default suite must not require Internet or reach Google Maps. The controlled Website Engine test uses localhost and local Chromium.
+The default suite must not require Internet or reach Google Maps. The controlled Website Engine test uses localhost. Production BrowserRuntime uses installed Microsoft Edge Stable through Playwright `channel="msedge"` for both modes.
 
 The live external check is opt-in:
 
 ```powershell
 $env:PROSPECTOR_RUN_E2E = "1"
-python -m pytest -m e2e -q
+.\venv\Scripts\python.exe -m pytest -m e2e -q
 Remove-Item Env:PROSPECTOR_RUN_E2E
 ```
 
 Its result is evaluated separately because Google Maps can vary by network, DOM and navigation timing.
+
+## Portable rebuild
+
+On Windows x64, install `requirements.txt`, `requirements-dev.txt` and the build-only `requirements-build.txt` into the chosen build environment, then run `python scripts/build_windows_portable.py` with that environment's Python. The PyInstaller script writes an ignored `temp/b-*` onedir, copies notices/licenses and refuses a bundled browser executable. It does not create a GitHub Release or reproduce an accepted ZIP hash automatically. Installed Microsoft Edge Stable is a runtime prerequisite, not a redistributed component. Inspect the build and create/upload a ZIP only through a separately authorized release workflow; see [portable usage](portable-windows.md).
 
 ## Guidelines
 

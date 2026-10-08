@@ -48,9 +48,9 @@ Deterministic, mandatory normalization follows extraction/enrichment. `SearchRes
 
 The accepted implementation provides bounded sequential `search_many()` execution, typed per-query outcomes, positional identity evidence, exact interquery deduplication of verified Google Place IDs and separate seven-column CSV/XLSX exports. P91–P96 and G01–G22 passed offline. The narrow P92 identity study was distinct from the owner's two later full CLI batches, which are accepted as **G23 PASS / OWNER LIVE ACCEPTED**. The owner accepts that `UNVERIFIED` observations remain exportable and may yield apparent commercial duplicates. No field merge, heuristic matching, persistence, campaigns, concurrency or new sources are part of this line. This is a development-cycle closure, not a release.
 
-## v1.0.0 — NEXT / FINAL HARDENING AND STABLE RELEASE
+## v1.0.0 — COMPLETE / OWNER ACCEPTED / FROZEN / PUBLICATION PENDING
 
-The next phase is limited to final hardening, stability, contract freeze, final validation, user documentation, packaging/distribution and preparation of the first stable CLI release. An `.exe` or installer may be considered during that phase, but neither exists by this closure. Physical Engine extraction and API consumers remain post-v1 possibilities, not prerequisites for the CLI's first stable release.
+The final-hardening scope is implemented as the frozen source and Windows portable release using installed Microsoft Edge Stable. Visible is the default; Background is available. The portable includes `prospector.exe` and Python/application runtimes but no browser executable. Source regression and packaged smoke on the primary Windows host passed. A separate clean Windows machine was not available; the owner waived that pre-release gate and deferred compatibility testing to post-release maintenance. R20 owner acceptance and the independent freeze audit are complete. Tag and GitHub Release publication remain pending separate authorization. Physical Engine extraction and API consumers remain post-v1 possibilities, not prerequisites for the CLI's first stable release.
 
 ## Post-v1 — POST_V1
 

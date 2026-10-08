@@ -27,7 +27,8 @@ maps_debug.html
 .env
 
 # Temporal documantation and results files 
-*.md
 *.csv
 *.xlsx
 temp/
+logs/
+.pytest_cache/

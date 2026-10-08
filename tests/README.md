@@ -15,13 +15,13 @@ tests/
 
 `tests/unit/` covers deterministic models, normalization rules and engine, helpers, website components, selector registry/fallback behavior and explicitly named characterization cases. `tests/integration/` covers the shared normalization path, CLI/export values, controlled localhost browser use and temporary export paths. These categories do not access Google Maps or the public Internet.
 
-The v0.9.x offline suite additionally covers batch preflight/snapshot, identity-sidecar alignment and negative cases, sequential runtime/failure isolation, exact interquery selection, provenance, CLI confirmation and independent CSV/XLSX files. Synthetic IDs in these tests validate algorithm behavior. The owner separately accepted two later real CLI batch runs as G23 live evidence; that acceptance is distinct from the earlier narrow P92 identity investigation recorded under `temp/Planeacion/v0.9.0/`. No new live run is part of the v0.9.7 documentation closure.
+The offline suite additionally covers batch preflight/snapshot, identity-sidecar alignment and negative cases, sequential runtime/failure isolation, exact interquery selection, provenance, CLI confirmation and independent CSV/XLSX files. v1.0.0 adds durable BrowserRuntime/driver-isolation, controlled cancellation, CLI semantics, metrics, version and portable-export tests. Synthetic IDs validate algorithm behavior. The owner separately accepted two real v0.9.x CLI batches as G23; the narrow P92 identity study is preserved in [tracked history](../docs/history/v0.9.0/P92IdentityEvidence.md). Temporary R09/R10/R19 manual probes were diagnostic, not required regression inputs; their conclusions are preserved in [v1.0.0 history](../docs/history/v1.0.0/).
 
 `tests/e2e/` contains live external checks. Enable the Google Maps check explicitly:
 
 ```powershell
 $env:PROSPECTOR_RUN_E2E = "1"
-python -m pytest -m e2e -q
+.\venv\Scripts\python.exe -m pytest -m e2e -q
 Remove-Item Env:PROSPECTOR_RUN_E2E
 ```
 
@@ -34,20 +34,21 @@ Research scripts are exploratory/manual tooling, not permanent pytest contracts.
 Development dependencies are separate from runtime dependencies:
 
 ```powershell
-python -m pip install -r requirements-dev.txt
+.\venv\Scripts\python.exe -m pip install -r requirements-dev.txt
 ```
 
-The recorded Phase 1 checkpoint used Python 3.13.4, pytest 9.1.1 and Playwright 1.61.0/Chromium. These are observed validation versions, not an official Python support policy.
+The historical Phase 1 checkpoint used Python 3.13.4 and pytest 9.1.1. v1.0.0 production browser policy is installed Microsoft Edge Stable through Playwright 1.61.0 `msedge`; historical Chromium observations do not supersede it. The project `venv` is the source regression environment.
 
 ```powershell
-python -m compileall -q src
-python -m pytest --collect-only -q
-python -m pytest tests\unit -q
-python -m pytest tests\integration -q
-python -m pytest -q
+Remove-Item Env:PROSPECTOR_RUN_E2E -ErrorAction SilentlyContinue
+$base = Join-Path $env:TEMP ("prospector-v100-freeze-" + [guid]::NewGuid().ToString("N"))
+.\venv\Scripts\python.exe -m compileall -q src
+.\venv\Scripts\python.exe -m pytest tests\unit -q -m "not e2e" --basetemp="${base}-unit"
+.\venv\Scripts\python.exe -m pytest tests\integration -q -m "not e2e" --basetemp="${base}-integration"
+.\venv\Scripts\python.exe -m pytest -q -m "not e2e" --basetemp="${base}-all"
 ```
 
-The exact test count may grow. The invariant is that the default command remains green, offline-capable and excludes live external E2E.
+Use a fresh external `%TEMP%` basetemp, not a fixed repository-local `temp/audit_runtime` path; the latter has produced Windows permission/path failures. The exact count may grow. The invariant is that the default command remains green, offline-capable and excludes live external E2E.
 
 ## Regression policy
 

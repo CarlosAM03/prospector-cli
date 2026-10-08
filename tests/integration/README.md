@@ -2,7 +2,7 @@
 
 This directory validates interactions between existing components in controlled environments.
 
-Current tests use a localhost HTTP fixture and local Playwright Chromium for Website Engine, plus temporary paths for `ExportService` CSV/XLSX output. They do not access Google Maps or the public Internet. Live Google Maps behavior belongs in `tests/e2e/` and is opt-in.
+Current tests use controlled localhost Website Engine fixtures, mocked source/global pipeline behavior and temporary paths for `ExportService` CSV/XLSX output. They do not access Google Maps or the public Internet; no Playwright-managed browser install is required for the ordinary suite. Live Google Maps behavior belongs in `tests/e2e/` and is opt-in.
 
 Assertions should protect observable contracts such as parsed metadata, result flow and export schema, not browser waits, concrete selectors or other known source-specific debt.
 

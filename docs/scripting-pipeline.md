@@ -69,7 +69,7 @@ The detail stage requires a confirmed click, the candidate's exact `!1s` navigat
 
 The source does not implement general configuration profiles, a Query Builder, heuristic or historical business matching, persistence, campaigns or multi-source acquisition. Global normalization, bounded multi-input, `EngineConfig`, module logging, the public Error Model and a CLI-connected `ProspectorEngine` exist. The owner-approved Google Maps maximum is 100. The earlier single-query owner runs belonged to v0.7.x; the later three-query batches are v0.9.x G23 evidence.
 
-## Approved target — TARGET_V0_7_X / TARGET_V1_0
+## Implemented Engine boundary — CURRENT
 
 ```text
 CLI adapter / future consumer
@@ -108,6 +108,6 @@ This model shows the implemented v0.8.x normalization and v0.9.x batch boundary.
 
 The project evolved around small stages with explicit inputs and outputs, incremental enrichment and source-specific extraction strategies. Navigation, selector resolution, dynamic-content synchronization, website inspection and export are separated so they can be reused where their behavior applies. Reuse is an architectural opportunity, not evidence that multiple sources currently consume every component.
 
-## Future evolution — TARGET_V0_7_X / TARGET_V1_0 / POST_V1
+## Future evolution — POST_V1
 
 The extraction flow runs behind `ProspectorEngine(config).search(query)` or bounded `search_many(queries)` while CLI presentation and `ExportService` remain outside the extraction core. `v0.8.x` added shared normalization; `v0.9.x` adds strict interquery selection without merge. Additional source strategies, API consumers and physical Engine packaging remain later possibilities.

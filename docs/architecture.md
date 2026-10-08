@@ -49,7 +49,7 @@ main.py
   -> SearchQuery
   -> EngineConfig(limit=interactive value or 50)
   -> ProspectorEngine.search(query)
-       -> BrowserRuntime -> Playwright / Chromium
+       -> BrowserRuntime -> Playwright / installed Microsoft Edge Stable
        -> NavigationEngine -> GoogleMapsNavigation
        -> Google Maps virtual/infinite feed loading
        -> summary parser -> ordered Business[]
@@ -137,7 +137,7 @@ The v0.7.x boundary means the Engine owns reusable prospecting orchestration; th
 - `v0.7.x` — `ACCEPTED BASELINE`: Google Maps stability, configuration boundary, browser lifecycle, logging separation, error/partial semantics, internal Engine facade and CLI adapter.
 - `v0.8.x` — `OWNER ACCEPTED / COMPLETE`: deterministic field normalization after extraction/enrichment. The owner's functional acceptance retained the historical N31 caveat: paired live inspection of original and normalized views was not performed; the invariants passed offline.
 - `v0.9.x` — `OWNER ACCEPTED / COMPLETE`: bounded sequential batch, verified-identity interquery selection, safe failures and independent exports; G01–G22 passed offline and G23 was owner live accepted. No field merge or historical matching.
-- `v1.0.0` — `NEXT / TARGET_V1_0`: final hardening, contract freeze, validation, packaging and first stable CLI release preparation; not yet implemented or released.
+- `v1.0.0` — `OWNER ACCEPTED / FROZEN / PUBLICATION PENDING`: Rich CLI, Edge-based Visible-default/Background-available runtime, local diagnostics and Windows portable packaging are implemented and offline/current-host verified. Separate clean-machine validation was waived by the owner for the initial release and deferred. R20 is owner accepted and the freeze audit passed; no tag or GitHub Release is claimed. See [freeze record](releases/v1.0.0/FREEZE.md).
 - post-v1 — `POST_V1`: possible physical Engine packaging/extraction, more sources/exporters or distributed execution.
 
 Prospector CLI does not implement SaaS, a web API, CRM/ERP, a DATRA backend, jobs or distributed execution.
