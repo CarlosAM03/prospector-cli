@@ -1,0 +1,131 @@
+name: Prospector CLI offline CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: offline-ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: pwsh
+
+env:
+  PYTHONPATH: ${{ github.workspace }}/src
+  PYTHONDONTWRITEBYTECODE: '1'
+  PIP_DISABLE_PIP_VERSION_CHECK: '1'
+
+jobs:
+  quality:
+    name: quality
+    runs-on: windows-2022
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.13.4'
+          architecture: x64
+      - name: Install existing pinned dependencies
+        run: python -m pip install -r requirements-dev.txt
+      - name: Record environment
+        run: |
+          python --version
+          python -m pip show playwright pytest
+          Get-CimInstance Win32_OperatingSystem | Select-Object Caption, Version, OSArchitecture
+      - name: Compile
+        run: python -m compileall -q src
+      - name: Import smoke
+        run: python -c "import cli_app, cli_runtime, main; from engines.browser_runtime import BrowserRuntime; from engines.prospector_engine import ProspectorEngine; from services.export_service import ExportService; from version import __version__; print('Import smoke PASS:', __version__)"
+
+  offline-regression:
+    name: offline-regression
+    runs-on: windows-2022
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.13.4'
+          architecture: x64
+      - name: Install existing pinned dependencies
+        run: python -m pip install -r requirements-dev.txt
+      # The unchanged localhost integration test explicitly launches Chromium.
+      # This does not replace the production BrowserRuntime's msedge channel.
+      - name: Install controlled-test Chromium
+        run: python -m playwright install chromium --only-shell
+      - name: Ensure Microsoft Edge Stable
+        run: |
+          $edge = "${env:ProgramFiles(x86)}\Microsoft\Edge\Application\msedge.exe"
+          if (-not (Test-Path -LiteralPath $edge)) {
+            python -m playwright install msedge
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+          if (-not (Test-Path -LiteralPath $edge)) { throw 'Microsoft Edge Stable unavailable' }
+          (Get-Item -LiteralPath $edge).VersionInfo | Select-Object ProductName, ProductVersion
+          python --version
+          python -m pip show playwright pytest
+      - name: Record browser process baseline
+        run: |
+          $ids = @(Get-CimInstance Win32_Process | Where-Object {
+            $_.Name -in @('msedge.exe', 'chrome.exe', 'chrome-headless-shell.exe') -or
+            ($_.Name -eq 'node.exe' -and $_.CommandLine -match 'playwright.*run-driver')
+          } | Select-Object -ExpandProperty ProcessId)
+          ConvertTo-Json -InputObject $ids | Set-Content (Join-Path $env:RUNNER_TEMP 'browser-baseline.json')
+      - name: Edge runtime smoke (offline, Visible and Background)
+        run: |
+          @'
+          from engines.browser_runtime import BrowserRuntime
+          for headless in (False, True):
+              with BrowserRuntime(headless=headless) as runtime:
+                  page = runtime.new_page()
+                  page.set_content('<title>Prospector offline CI</title>')
+                  assert page.title() == 'Prospector offline CI'
+                  print(f'Edge runtime PASS: headless={headless}, version={runtime.browser.version}')
+              assert runtime.browser is None
+          '@ | python -
+      - name: unit
+        run: |
+          $base = Join-Path $env:RUNNER_TEMP ('prospector-unit-' + [guid]::NewGuid().ToString('N'))
+          python -m pytest tests/unit -q -m "not e2e" --basetemp="$base"
+      - name: integration
+        run: |
+          $base = Join-Path $env:RUNNER_TEMP ('prospector-integration-' + [guid]::NewGuid().ToString('N'))
+          python -m pytest tests/integration -q -m "not e2e" --basetemp="$base"
+      - name: Full offline regression (required gate)
+        run: |
+          $base = Join-Path $env:RUNNER_TEMP ('prospector-offline-' + [guid]::NewGuid().ToString('N'))
+          python -m pytest -q -m "not e2e" --basetemp="$base"
+      - name: Verify browser processes closed
+        if: ${{ always() }}
+        run: |
+          $baseline = Join-Path $env:RUNNER_TEMP 'browser-baseline.json'
+          if (-not (Test-Path -LiteralPath $baseline)) { return }
+          $ids = @(Get-Content -Raw -LiteralPath $baseline | ConvertFrom-Json)
+          for ($attempt = 0; $attempt -lt 10; $attempt++) {
+            $remaining = @(Get-CimInstance Win32_Process | Where-Object {
+              $_.ProcessId -notin $ids -and (
+                $_.Name -in @('msedge.exe', 'chrome.exe', 'chrome-headless-shell.exe') -or
+                ($_.Name -eq 'node.exe' -and $_.CommandLine -match 'playwright.*run-driver'))
+            })
+            if ($remaining.Count -eq 0) { Write-Output 'Browser process cleanup PASS'; return }
+            Start-Sleep -Seconds 1
+          }
+          $remaining | Select-Object Name, ProcessId
+          throw 'Browser or Playwright driver processes remain after offline validation'
